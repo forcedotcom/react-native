@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name                = "React"
-  s.version             = "0.9.0-rc"
+  s.version             = "0.9.0"
   s.summary             = "Build high quality mobile apps using React."
   s.description         = <<-DESC
                             React Native apps are built using the React JS
@@ -48,12 +48,6 @@ Pod::Spec.new do |s|
     ss.dependency         'React/Core'
     ss.source_files     = "Libraries/AdSupport/*.{h,m}"
     ss.preserve_paths   = "Libraries/AdSupport/*.js"
-  end
-
-  s.subspec 'RCTAnimationExperimental' do |ss|
-    ss.dependency         'React/Core'
-    ss.source_files     = "Libraries/Animation/RCTAnimationExperimental*.{h,m}"
-    ss.preserve_paths   = "Libraries/Animation/*.js"
   end
 
   s.subspec 'RCTGeolocation' do |ss|
