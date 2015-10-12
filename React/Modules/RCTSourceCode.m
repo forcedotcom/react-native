@@ -9,6 +9,7 @@
 
 #import "RCTSourceCode.h"
 
+#import "RCTDefines.h"
 #import "RCTAssert.h"
 #import "RCTBridge.h"
 #import "RCTUtils.h"
@@ -19,10 +20,14 @@ RCT_EXPORT_MODULE()
 
 @synthesize bridge = _bridge;
 
+#if !RCT_DEV
+- (void)setScriptText:(NSString *)scriptText {}
+#endif
+
 RCT_EXPORT_METHOD(getScriptText:(RCTResponseSenderBlock)successCallback
                   failureCallback:(RCTResponseErrorBlock)failureCallback)
 {
-  if (self.scriptText && self.scriptURL) {
+  if (RCT_DEV && self.scriptText && self.scriptURL) {
     successCallback(@[@{@"text": self.scriptText, @"url": self.scriptURL.absoluteString}]);
   } else {
     failureCallback(RCTErrorWithMessage(@"Source code is not available"));

@@ -4,24 +4,30 @@
  * Copyright 2004-present Facebook. All Rights Reserved.
  */
 
+'use strict';
+
 var fs = require('fs');
 var path = require('path');
 var exec = require('child_process').exec;
-var prompt = require("prompt");
+var spawn = require('child_process').spawn;
+var prompt = require('prompt');
 
 var CLI_MODULE_PATH = function() {
   return path.resolve(
     process.cwd(),
     'node_modules',
     'react-native',
-    'cli'
+    'cli.js'
   );
 };
 
+checkForVersionArgument();
+
 var cli;
-try {
-  cli = require(CLI_MODULE_PATH());
-} catch(e) {}
+var cliPath = CLI_MODULE_PATH();
+if (fs.existsSync(cliPath)) {
+  cli = require(cliPath);
+}
 
 if (cli) {
   cli.run();
@@ -37,10 +43,11 @@ if (cli) {
   switch (args[0]) {
   case 'init':
     if (args[1]) {
-      init(args[1]);
+      var verbose = process.argv.indexOf('--verbose') >= 0;
+      init(args[1], verbose);
     } else {
       console.error(
-        'Usage: react-native init <ProjectName>'
+        'Usage: react-native init <ProjectName> [--verbose]'
       );
       process.exit(1);
     }
@@ -76,17 +83,17 @@ function validatePackageName(name) {
   }
 }
 
-function init(name) {
+function init(name, verbose) {
   validatePackageName(name);
 
   if (fs.existsSync(name)) {
-    createAfterConfirmation(name)
+    createAfterConfirmation(name, verbose);
   } else {
-    createProject(name);
+    createProject(name, verbose);
   }
 }
 
-function createAfterConfirmation(name) {
+function createAfterConfirmation(name, verbose) {
   prompt.start();
 
   var property = {
@@ -99,7 +106,7 @@ function createAfterConfirmation(name) {
 
   prompt.get(property, function (err, result) {
     if (result.yesno[0] === 'y') {
-      createProject(name);
+      createProject(name, verbose);
     } else {
       console.log('Project initialization canceled');
       process.exit();
@@ -107,7 +114,7 @@ function createAfterConfirmation(name) {
   });
 }
 
-function createProject(name) {
+function createProject(name, verbose) {
   var root = path.resolve(name);
   var projectName = path.basename(root);
 
@@ -132,6 +139,15 @@ function createProject(name) {
   process.chdir(root);
 
   console.log('Installing react-native package from npm...');
+
+  if (verbose) {
+    runVerbose(root, projectName);
+  } else {
+    run(root, projectName);
+  }
+}
+
+function run(root, projectName) {
   exec('npm install --save react-native', function(e, stdout, stderr) {
     if (e) {
       console.log(stdout);
@@ -143,4 +159,25 @@ function createProject(name) {
     var cli = require(CLI_MODULE_PATH());
     cli.init(root, projectName);
   });
+}
+
+function runVerbose(root, projectName) {
+  var proc = spawn('npm', ['install', '--verbose', '--save', 'react-native'], {stdio: 'inherit'});
+  proc.on('close', function (code) {
+    if (code !== 0) {
+      console.error('`npm install --save react-native` failed');
+      return;
+    }
+
+    cli = require(CLI_MODULE_PATH());
+    cli.init(root, projectName);
+  });
+}
+
+function checkForVersionArgument() {
+  if (process.argv.indexOf('-v') >= 0 || process.argv.indexOf('--version') >= 0) {
+    var pjson = require('./package.json');
+    console.log(pjson.version);
+    process.exit();
+  }
 }

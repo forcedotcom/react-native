@@ -13,6 +13,7 @@ const fs = require('fs');
 const path = require('path');
 const Promise = require('promise');
 const ProgressBar = require('progress');
+const BundlesLayout = require('../BundlesLayout');
 const Cache = require('../Cache');
 const Transformer = require('../JSTransformer');
 const DependencyResolver = require('../DependencyResolver');
@@ -104,6 +105,13 @@ class Bundler {
       cache: this._cache,
     });
 
+    this._bundlesLayout = new BundlesLayout({
+      dependencyResolver: this._resolver,
+      resetCache: opts.resetCache,
+      cacheVersion: opts.cacheVersion,
+      projectRoots: opts.projectRoots,
+    });
+
     this._transformer = new Transformer({
       projectRoots: opts.projectRoots,
       blacklistRE: opts.blacklistRE,
@@ -118,6 +126,10 @@ class Bundler {
   kill() {
     this._transformer.kill();
     return this._cache.end();
+  }
+
+  getLayout(main, isDev) {
+    return this._bundlesLayout.generateLayout(main, isDev);
   }
 
   bundle(main, runModule, sourceMapUrl, isDev, platform) {
@@ -181,7 +193,7 @@ class Bundler {
     if (module.isAsset_DEPRECATED()) {
       transform = this.generateAssetModule_DEPRECATED(bundle, module);
     } else if (module.isAsset()) {
-      transform = this.generateAssetModule(bundle, module);
+      transform = this.generateAssetModule(bundle, module, platform);
     } else if (module.isJSON()) {
       transform = generateJSONModule(module);
     } else {
@@ -240,12 +252,12 @@ class Bundler {
     });
   }
 
-  generateAssetModule(bundle, module) {
+  generateAssetModule(bundle, module, platform = null) {
     const relPath = getPathRelativeToRoot(this._projectRoots, module.path);
 
     return Promise.all([
       sizeOf(module.path),
-      this._assetServer.getAssetData(relPath),
+      this._assetServer.getAssetData(relPath, platform),
     ]).then(function(res) {
       const dimensions = res[0];
       const assetData = res[1];
@@ -256,6 +268,7 @@ class Bundler {
         width: dimensions.width / module.resolution,
         height: dimensions.height / module.resolution,
         scales: assetData.scales,
+        files: assetData.files,
         hash: assetData.hash,
         name: assetData.name,
         type: assetData.type,

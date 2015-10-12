@@ -14,14 +14,16 @@ const Promise = require('promise');
 
 jest
   .mock('fs')
-  .mock('../../../Cache');
+  .mock('../../../Cache')
+  .mock('../../../Activity');
+
+var Cache = require('../../../Cache');
+var DependencyGraph = require('../index');
+var fs = require('fs');
 
 describe('DependencyGraph', function() {
   var cache;
-  var Cache;
-  var DependencyGraph;
   var fileWatcher;
-  var fs;
 
   function getOrderedDependenciesAsJSON(dgraph, entry, platform) {
     return dgraph.getDependencies(entry, platform)
@@ -43,10 +45,6 @@ describe('DependencyGraph', function() {
   }
 
   beforeEach(function() {
-    fs = require('fs');
-    Cache = require('../../../Cache');
-    DependencyGraph = require('../index');
-
     fileWatcher = {
       on: function() {
         return this;

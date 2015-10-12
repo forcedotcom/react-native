@@ -178,7 +178,7 @@ var GESTURE_ACTIONS = [
  *  - `replacePrevious(route)` - Replace the previous scene
  *  - `immediatelyResetRouteStack(routeStack)` - Reset every scene with an
  *     array of routes
- *  - `popToRoute(route)` - Pop to a particular scene, as specified by it's
+ *  - `popToRoute(route)` - Pop to a particular scene, as specified by its
  *     route. All scenes after it will be unmounted
  *  - `popToTop()` - Pop to the first scene in the stack, unmounting every
  *     other scene
@@ -558,8 +558,8 @@ var Navigator = React.createClass({
     } else if (this.state.activeGesture) {
       toIndex = this.state.presentedIndex + this._deltaForGestureAction(this.state.activeGesture);
     }
-    this._setRenderSceneToHarwareTextureAndroid(fromIndex, true);
-    this._setRenderSceneToHarwareTextureAndroid(toIndex, true);
+    this._setRenderSceneToHardwareTextureAndroid(fromIndex, true);
+    this._setRenderSceneToHardwareTextureAndroid(toIndex, true);
     var navBar = this._navBar;
     if (navBar && navBar.onAnimationStart) {
       navBar.onAnimationStart(fromIndex, toIndex);
@@ -569,7 +569,7 @@ var Navigator = React.createClass({
   _onAnimationEnd: function() {
     var max = this.state.routeStack.length - 1;
     for (var index = 0; index <= max; index++) {
-      this._setRenderSceneToHarwareTextureAndroid(index, false);
+      this._setRenderSceneToHardwareTextureAndroid(index, false);
     }
 
     var navBar = this._navBar;
@@ -578,7 +578,7 @@ var Navigator = React.createClass({
     }
   },
 
-  _setRenderSceneToHarwareTextureAndroid: function(sceneIndex, shouldRenderToHardwareTexture) {
+  _setRenderSceneToHardwareTextureAndroid: function(sceneIndex, shouldRenderToHardwareTexture) {
     var viewAtIndex = this.refs['scene_' + sceneIndex];
     if (viewAtIndex === null || viewAtIndex === undefined) {
       return;
@@ -690,6 +690,9 @@ var Navigator = React.createClass({
   },
 
   _handlePanResponderTerminate: function(e, gestureState) {
+    if (this.state.activeGesture == null) {
+      return;
+    }
     var destIndex = this.state.presentedIndex + this._deltaForGestureAction(this.state.activeGesture);
     this._detachGesture();
     var transitionBackToPresentedIndex = this.state.presentedIndex;
