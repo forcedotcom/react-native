@@ -10,19 +10,21 @@
 
 jest
   .autoMockOff()
-  .mock('../../Cache');
+  .mock('../../Cache')
+  .mock('../../Activity');
 
 const Promise = require('promise');
 const path = require('path');
 
 jest.mock('fs');
 
+var BundlesLayout = require('../index');
+var Cache = require('../../Cache');
+var DependencyResolver = require('../../DependencyResolver');
+var fs = require('fs');
+
 describe('BundlesLayout', () => {
-  var BundlesLayout;
-  var Cache;
-  var DependencyResolver;
   var fileWatcher;
-  var fs;
 
   const polyfills = [
     'polyfills/prelude_dev.js',
@@ -37,11 +39,6 @@ describe('BundlesLayout', () => {
   const baseFs = getBaseFs();
 
   beforeEach(() => {
-    fs = require('fs');
-    BundlesLayout = require('../index');
-    Cache = require('../../Cache');
-    DependencyResolver = require('../../DependencyResolver');
-
     fileWatcher = {
       on: () => this,
       isWatchman: () => Promise.resolve(false)
@@ -58,7 +55,11 @@ describe('BundlesLayout', () => {
         assetRoots: ['/root'],
       });
 
-      return new BundlesLayout({dependencyResolver: resolver});
+      return new BundlesLayout({
+        dependencyResolver: resolver,
+        resetCache: true,
+        projectRoots: ['/root', '/' + __dirname.split('/')[1]],
+      });
     }
 
     function stripPolyfills(bundle) {
@@ -97,7 +98,7 @@ describe('BundlesLayout', () => {
         }
       });
 
-      return newBundlesLayout().generateLayout(['/root/index.js']).then(bundles =>
+      return newBundlesLayout().getLayout('/root/index.js').then(bundles =>
         stripPolyfills(bundles).then(resolvedBundles =>
           expect(resolvedBundles).toEqual({
             id: 'bundle.0',
@@ -123,7 +124,7 @@ describe('BundlesLayout', () => {
         }
       });
 
-      return newBundlesLayout().generateLayout(['/root/index.js']).then(bundles =>
+      return newBundlesLayout().getLayout('/root/index.js').then(bundles =>
         stripPolyfills(bundles).then(resolvedBundles =>
           expect(resolvedBundles).toEqual({
             id: 'bundle.0',
@@ -149,7 +150,7 @@ describe('BundlesLayout', () => {
         }
       });
 
-      return newBundlesLayout().generateLayout(['/root/index.js']).then(bundles =>
+      return newBundlesLayout().getLayout('/root/index.js').then(bundles =>
         stripPolyfills(bundles).then(resolvedBundles =>
           expect(resolvedBundles).toEqual({
             id: 'bundle.0',
@@ -184,7 +185,7 @@ describe('BundlesLayout', () => {
         }
       });
 
-      return newBundlesLayout().generateLayout(['/root/index.js']).then(bundles =>
+      return newBundlesLayout().getLayout('/root/index.js').then(bundles =>
         stripPolyfills(bundles).then(resolvedBundles =>
           expect(resolvedBundles).toEqual({
             id: 'bundle.0',
@@ -225,7 +226,7 @@ describe('BundlesLayout', () => {
         }
       });
 
-      return newBundlesLayout().generateLayout(['/root/index.js']).then(bundles =>
+      return newBundlesLayout().getLayout('/root/index.js').then(bundles =>
         stripPolyfills(bundles).then(resolvedBundles =>
           expect(resolvedBundles).toEqual({
             id: 'bundle.0',
@@ -265,7 +266,7 @@ describe('BundlesLayout', () => {
         }
       });
 
-      return newBundlesLayout().generateLayout(['/root/index.js']).then(bundles =>
+      return newBundlesLayout().getLayout('/root/index.js').then(bundles =>
         stripPolyfills(bundles).then(resolvedBundles =>
           expect(resolvedBundles).toEqual({
             id: 'bundle.0',
@@ -306,7 +307,7 @@ describe('BundlesLayout', () => {
         }
       });
 
-      return newBundlesLayout().generateLayout(['/root/index.js']).then(bundles =>
+      return newBundlesLayout().getLayout('/root/index.js').then(bundles =>
         stripPolyfills(bundles).then(resolvedBundles =>
           expect(resolvedBundles).toEqual({
             id: 'bundle.0',
@@ -353,7 +354,7 @@ describe('BundlesLayout', () => {
         }
       });
 
-      return newBundlesLayout().generateLayout(['/root/index.js']).then(bundles =>
+      return newBundlesLayout().getLayout('/root/index.js').then(bundles =>
         stripPolyfills(bundles).then(resolvedBundles =>
           expect(resolvedBundles).toEqual({
             id: 'bundle.0',
@@ -391,7 +392,7 @@ describe('BundlesLayout', () => {
         }
       });
 
-      return newBundlesLayout().generateLayout(['/root/index.js']).then(bundles =>
+      return newBundlesLayout().getLayout('/root/index.js').then(bundles =>
         stripPolyfills(bundles).then(resolvedBundles =>
           expect(resolvedBundles).toEqual({
             id: 'bundle.0',
@@ -429,7 +430,7 @@ describe('BundlesLayout', () => {
         }
       });
 
-      return newBundlesLayout().generateLayout(['/root/index.js']).then(bundles =>
+      return newBundlesLayout().getLayout('/root/index.js').then(bundles =>
         stripPolyfills(bundles).then(resolvedBundles =>
           expect(resolvedBundles).toEqual({
             id: 'bundle.0',
@@ -463,7 +464,7 @@ describe('BundlesLayout', () => {
         }
       });
 
-      return newBundlesLayout().generateLayout(['/root/index.js']).then(bundles =>
+      return newBundlesLayout().getLayout('/root/index.js').then(bundles =>
         stripPolyfills(bundles).then(resolvedBundles =>
           expect(resolvedBundles).toEqual({
             id: 'bundle.0',
@@ -495,7 +496,7 @@ describe('BundlesLayout', () => {
         }
       });
 
-      return newBundlesLayout().generateLayout(['/root/index.js']).then(bundles =>
+      return newBundlesLayout().getLayout('/root/index.js').then(bundles =>
         stripPolyfills(bundles).then(resolvedBundles =>
           expect(resolvedBundles).toEqual({
             id: 'bundle.0',
@@ -522,7 +523,7 @@ describe('BundlesLayout', () => {
         }
       });
 
-      return newBundlesLayout().generateLayout(['/root/index.js']).then(bundles =>
+      return newBundlesLayout().getLayout('/root/index.js').then(bundles =>
         stripPolyfills(bundles).then(resolvedBundles =>
           expect(resolvedBundles).toEqual({
             id: 'bundle.0',
@@ -559,7 +560,7 @@ describe('BundlesLayout', () => {
         }
       });
 
-      return newBundlesLayout().generateLayout(['/root/index.js']).then(bundles =>
+      return newBundlesLayout().getLayout('/root/index.js').then(bundles =>
         stripPolyfills(bundles).then(resolvedBundles =>
           expect(resolvedBundles).toEqual({
             id: 'bundle.0',

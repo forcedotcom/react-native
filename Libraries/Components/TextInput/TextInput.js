@@ -40,31 +40,12 @@ var notMultiline = {
   onSubmitEditing: true,
 };
 
-var AndroidTextInputAttributes = {
-  autoCapitalize: true,
-  autoCorrect: true,
-  autoFocus: true,
-  textAlign: true,
-  textAlignVertical: true,
-  keyboardType: true,
-  mostRecentEventCount: true,
-  multiline: true,
-  password: true,
-  placeholder: true,
-  placeholderTextColor: true,
-  text: true,
-  testID: true,
-  underlineColorAndroid: true,
-  editable : true,
-};
-
-var viewConfigAndroid = {
-  uiViewClassName: 'AndroidTextInput',
-  validAttributes: AndroidTextInputAttributes,
-};
-
-var RCTTextView = requireNativeComponent('RCTTextView', null);
-var RCTTextField = requireNativeComponent('RCTTextField', null);
+if (Platform.OS === 'android') {
+  var AndroidTextInput = requireNativeComponent('AndroidTextInput', null);
+} else if (Platform.OS === 'ios') {
+  var RCTTextView = requireNativeComponent('RCTTextView', null);
+  var RCTTextField = requireNativeComponent('RCTTextField', null);
+}
 
 type Event = Object;
 
@@ -194,6 +175,12 @@ var TextInput = React.createClass({
      */
     maxLength: PropTypes.number,
     /**
+     * Sets the number of lines for a TextInput. Use it with multiline set to
+     * true to be able to fill the lines.
+     * @platform android
+     */
+    numberOfLines: PropTypes.number,
+    /**
      * If true, the keyboard disables the return key when there is no text and
      * automatically enables it when there is text. The default value is false.
      * @platform ios
@@ -310,7 +297,7 @@ var TextInput = React.createClass({
   mixins: [NativeMethodsMixin, TimerMixin],
 
   viewConfig: ((Platform.OS === 'ios' ? RCTTextField.viewConfig :
-    (Platform.OS === 'android' ? viewConfigAndroid : {})) : Object),
+    (Platform.OS === 'android' ? AndroidTextInput.viewConfig : {})) : Object),
 
   isFocused: function(): boolean {
     return TextInputState.currentlyFocusedField() ===
@@ -484,6 +471,7 @@ var TextInput = React.createClass({
         keyboardType={this.props.keyboardType}
         mostRecentEventCount={this.state.mostRecentEventCount}
         multiline={this.props.multiline}
+        numberOfLines={this.props.numberOfLines}
         onFocus={this._onFocus}
         onBlur={this._onBlur}
         onChange={this._onChange}
@@ -568,11 +556,6 @@ var styles = StyleSheet.create({
   input: {
     alignSelf: 'stretch',
   },
-});
-
-var AndroidTextInput = createReactNativeComponentClass({
-  validAttributes: AndroidTextInputAttributes,
-  uiViewClassName: 'AndroidTextInput',
 });
 
 module.exports = TextInput;

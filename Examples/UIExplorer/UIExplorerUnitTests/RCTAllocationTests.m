@@ -23,7 +23,7 @@
 #define RUN_RUNLOOP_WHILE(CONDITION) \
 _Pragma("clang diagnostic push") \
 _Pragma("clang diagnostic ignored \"-Wshadow\"") \
-NSDate *timeout = [[NSDate date] dateByAddingTimeInterval:0.1]; \
+NSDate *timeout = [[NSDate date] dateByAddingTimeInterval:5]; \
 while ((CONDITION) && [timeout timeIntervalSinceNow] > 0) { \
   [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:timeout]; \
 } \

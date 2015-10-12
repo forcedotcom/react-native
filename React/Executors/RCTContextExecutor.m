@@ -16,13 +16,14 @@
 
 #import "RCTAssert.h"
 #import "RCTDefines.h"
+#import "RCTDevMenu.h"
 #import "RCTLog.h"
 #import "RCTProfile.h"
 #import "RCTPerformanceLogger.h"
 #import "RCTUtils.h"
 
 #ifndef RCT_JSC_PROFILER
-#if RCT_DEV && RCT_DEBUG
+#if RCT_DEV
 #define RCT_JSC_PROFILER 1
 #else
 #define RCT_JSC_PROFILER 0
@@ -32,8 +33,10 @@
 #if RCT_JSC_PROFILER
 #include <dlfcn.h>
 
+static NSString * const RCTJSCProfilerEnabledDefaultsKey = @"RCTJSCProfilerEnabled";
+
 #ifndef RCT_JSC_PROFILER_DYLIB
-#define RCT_JSC_PROFILER_DYLIB [[[NSBundle mainBundle] pathForResource:[NSString stringWithFormat:@"RCTJSCProfiler.ios%zd", [[[UIDevice currentDevice] systemVersion] integerValue]] ofType:@"dylib" inDirectory:@"Frameworks"] UTF8String]
+#define RCT_JSC_PROFILER_DYLIB [[[NSBundle mainBundle] pathForResource:[NSString stringWithFormat:@"RCTJSCProfiler.ios%zd", [[[UIDevice currentDevice] systemVersion] integerValue]] ofType:@"dylib" inDirectory:@"RCTJSCProfiler"] UTF8String]
 #endif
 #endif
 
@@ -89,6 +92,7 @@ RCT_NOT_IMPLEMENTED(-(instancetype)init)
 }
 
 @synthesize valid = _valid;
+@synthesize bridge = _bridge;
 
 RCT_EXPORT_MODULE()
 
@@ -110,7 +114,7 @@ static JSValueRef RCTNativeLoggingHook(JSContextRef context, __unused JSObjectRe
     NSString *message = (__bridge_transfer NSString *)JSStringCopyCFString(kCFAllocatorDefault, messageRef);
     JSStringRelease(messageRef);
     NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:
-                                  @"( stack: )?([_a-z0-9]*)@?(http://|file:///)[a-z.0-9:/_-]+/([a-z0-9_]+).includeRequire.runModule.bundle(:[0-9]+:[0-9]+)"
+                                  @"( stack: )?([_a-z0-9]*)@?(http://|file:///)[a-z.0-9:/_-]+/([a-z0-9_]+).bundle(:[0-9]+:[0-9]+)"
                                                                            options:NSRegularExpressionCaseInsensitive
                                                                              error:NULL];
     message = [regex stringByReplacingMatchesInString:message
@@ -204,6 +208,42 @@ static JSValueRef RCTNativeTraceEndSection(JSContextRef context, __unused JSObje
   return JSValueMakeUndefined(context);
 }
 
+static void RCTInstallJSCProfiler(RCTBridge *bridge, JSContextRef context)
+{
+#if RCT_JSC_PROFILER
+  void *JSCProfiler = dlopen(RCT_JSC_PROFILER_DYLIB, RTLD_NOW);
+  if (JSCProfiler != NULL) {
+    void (*nativeProfilerStart)(JSContextRef, const char *) =
+      (__typeof__(nativeProfilerStart))dlsym(JSCProfiler, "nativeProfilerStart");
+    void (*nativeProfilerEnd)(JSContextRef, const char *, const char *) =
+      (__typeof__(nativeProfilerEnd))dlsym(JSCProfiler, "nativeProfilerEnd");
+
+    if (nativeProfilerStart != NULL && nativeProfilerEnd != NULL) {
+      void (*nativeProfilerEnableByteCode)(void) =
+        (__typeof__(nativeProfilerEnableByteCode))dlsym(JSCProfiler, "nativeProfilerEnableByteCode");
+
+      if (nativeProfilerEnableByteCode != NULL) {
+        nativeProfilerEnableByteCode();
+      }
+
+      [bridge.devMenu addItem:[RCTDevMenuItem toggleItemWithKey:RCTJSCProfilerEnabledDefaultsKey title:@"Start Profiling" selectedTitle:@"Stop Profiling" handler:^(BOOL shouldStart) {
+        if (shouldStart) {
+          nativeProfilerStart(context, "profile");
+        } else {
+          NSString *outputFile = [NSTemporaryDirectory() stringByAppendingPathComponent:@"cpu_profile.json"];
+          nativeProfilerEnd(context, "profile", outputFile.UTF8String);
+          NSData *profileData = [NSData dataWithContentsOfFile:outputFile
+                                                       options:NSDataReadingMappedIfSafe
+                                                         error:NULL];
+
+          RCTProfileSendResult(bridge, @"cpu-profile", profileData);
+        }
+      }]];
+    }
+  }
+#endif
+}
+
 #endif
 
 + (void)runRunLoopThread
@@ -282,17 +322,7 @@ static JSValueRef RCTNativeTraceEndSection(JSContextRef context, __unused JSObje
     [strongSelf _addNativeHook:RCTNativeTraceBeginSection withName:"nativeTraceBeginSection"];
     [strongSelf _addNativeHook:RCTNativeTraceEndSection withName:"nativeTraceEndSection"];
 
-#if RCT_JSC_PROFILER
-    void *JSCProfiler = dlopen(RCT_JSC_PROFILER_DYLIB, RTLD_NOW);
-    if (JSCProfiler != NULL) {
-      JSObjectCallAsFunctionCallback nativeProfilerStart = dlsym(JSCProfiler, "nativeProfilerStart");
-      JSObjectCallAsFunctionCallback nativeProfilerEnd = dlsym(JSCProfiler, "nativeProfilerEnd");
-      if (nativeProfilerStart != NULL && nativeProfilerEnd != NULL) {
-        [strongSelf _addNativeHook:nativeProfilerStart withName:"nativeProfilerStart"];
-        [strongSelf _addNativeHook:nativeProfilerEnd withName:"nativeProfilerStop"];
-      }
-    }
-#endif
+    RCTInstallJSCProfiler(_bridge, strongSelf->_context.ctx);
 
     for (NSString *event in @[RCTProfileDidStartProfiling, RCTProfileDidEndProfiling]) {
       [[NSNotificationCenter defaultCenter] addObserver:strongSelf
@@ -557,7 +587,10 @@ static JSValueRef RCTNativeTraceEndSection(JSContextRef context, __unused JSObje
 
 RCT_EXPORT_METHOD(setContextName:(nonnull NSString *)name)
 {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-pointer-compare"
   if (JSGlobalContextSetName != NULL) {
+#pragma clang diagnostic pop
     JSStringRef JSName = JSStringCreateWithCFString((__bridge CFStringRef)name);
     JSGlobalContextSetName(_context.ctx, JSName);
     JSStringRelease(JSName);

@@ -246,7 +246,7 @@ concise, robust, and performant way.  Check out more example code in
 doesn't support what you need, and the following sections cover other animation
 systems.
 
-### LayoutAnimation
+### LayoutAnimation (iOS only)
 
 `LayoutAnimation` allows you to globally configure `create` and `update`
 animations that will be used for all views in the next render/layout cycle.
@@ -298,7 +298,7 @@ var App = React.createClass({
 [Run this example](https://rnplay.org/apps/uaQrGQ)
 
 This example uses a preset value, you can customize the animations as
-you need, see [LayoutAnimation.js](https://github.com/facebook/react-native/blob/master/Libraries/Animation/LayoutAnimation.js)
+you need, see [LayoutAnimation.js](https://github.com/facebook/react-native/blob/master/Libraries/LayoutAnimation/LayoutAnimation.js)
 for more information.
 
 ### requestAnimationFrame

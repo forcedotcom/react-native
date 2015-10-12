@@ -19,15 +19,9 @@ var stringifySafe = require('stringifySafe');
 
 var sourceMapPromise;
 
-type Exception = {
-  sourceURL: string;
-  line: number;
-  message: string;
-}
-
 var exceptionID = 0;
 
-function reportException(e: Exception, isFatal: bool, stack?: any) {
+function reportException(e: Error, isFatal: bool, stack?: any) {
   var currentExceptionID = ++exceptionID;
   if (RCTExceptionsManager) {
     if (!stack) {
@@ -36,7 +30,7 @@ function reportException(e: Exception, isFatal: bool, stack?: any) {
     if (isFatal) {
       RCTExceptionsManager.reportFatalException(e.message, stack, currentExceptionID);
     } else {
-      RCTExceptionsManager.reportSoftException(e.message, stack);
+      RCTExceptionsManager.reportSoftException(e.message, stack, currentExceptionID);
     }
     if (__DEV__) {
       (sourceMapPromise = sourceMapPromise || loadSourceMap())
@@ -53,13 +47,20 @@ function reportException(e: Exception, isFatal: bool, stack?: any) {
   }
 }
 
-function handleException(e: Exception, isFatal: boolean) {
+function handleException(e: Error, isFatal: boolean) {
+  // Workaround for reporting errors caused by `throw 'some string'`
+  // Unfortunately there is no way to figure out the stacktrace in this
+  // case, so if you ended up here trying to trace an error, look for
+  // `throw '<error message>'` somewhere in your codebase.
+  if (!e.message) {
+    e = new Error(e);
+  }
   var stack = parseErrorStack(e);
   var msg =
     'Error: ' + e.message +
     '\n stack: \n' + stackToString(stack) +
-    '\n URL: ' + e.sourceURL +
-    '\n line: ' + e.line +
+    '\n URL: ' + (e: any).sourceURL +
+    '\n line: ' + (e: any).line +
     '\n message: ' + e.message;
   if (console.errorOriginal) {
     console.errorOriginal(msg);
