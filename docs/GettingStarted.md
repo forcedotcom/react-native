@@ -9,10 +9,11 @@ next: android-setup
 
 ## Requirements
 
-1. OS X - Only OS X is currently supported
-2. [Homebrew](http://brew.sh/) is the recommended way to install nvm, watchman, and flow.
+1. OS X - This guide assumes OS X which is needed for iOS development.
+2. [Homebrew](http://brew.sh/) is the recommended way to install Watchman and Flow.
 3. Install [Node.js](https://nodejs.org/) 4.0 or newer.
-  - Install **nvm** with Homebrew or [its setup instructions here](https://github.com/creationix/nvm#installation). Then run `nvm install node && nvm alias default node`, which installs the latest version of Node.js and sets up your terminal so you can run it by typing `node`. With nvm you can install multiple versions of Node.js and easily switch between them.
+  - Install **nvm** with [its setup instructions here](https://github.com/creationix/nvm#installation). Then run `nvm install node && nvm alias default node`, which installs the latest version of Node.js and sets up your terminal so you can run it by typing `node`. With nvm you can install multiple versions of Node.js and easily switch between them.
+  - If you are using Node 5.0 or newer, we recommend installing npm 2, which is much faster than npm 3. After installing Node, run `npm install -g npm@2`.
   - New to [npm](https://docs.npmjs.com/)?
 4. `brew install watchman`. We recommend installing [watchman](https://facebook.github.io/watchman/docs/install.html), otherwise you might hit a node file watching bug.
 5. `brew install flow`, if you want to use [flow](http://www.flowtype.org).
@@ -21,11 +22,13 @@ We recommend periodically running `brew update && brew upgrade` to keep your pro
 
 ## iOS Setup
 
-[Xcode](https://developer.apple.com/xcode/downloads/) 6.3 or higher is required. It can be installed from the App Store.
+[Xcode](https://developer.apple.com/xcode/downloads/) 7.0 or higher is required. It can be installed from the App Store.
 
 ## Android Setup
 
 To write React Native apps for Android, you will need to install the Android SDK (and an Android emulator if you want to work on your app without having to use a physical device). See [Android setup guide](android-setup.html) for instructions on how to set up your Android environment.
+
+_NOTE:_ There is experimental [Windows and Linux support](/react-native/docs/linux-windows-support.html) for Android development.
 
 ## Quick start
 

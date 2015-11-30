@@ -16,13 +16,21 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 
-// VisibleForTesting
+import com.facebook.common.logging.FLog;
+import com.facebook.react.common.ReactConstants;
+
+/**
+ * Database supplier of the database used by react native. This creates, opens and deletes the
+ * database as necessary.
+ */
 public class ReactDatabaseSupplier extends SQLiteOpenHelper {
 
   // VisibleForTesting
   public static final String DATABASE_NAME = "RKStorage";
-  static final int DATABASE_VERSION = 1;
+
+  private static final int DATABASE_VERSION = 1;
   private static final int SLEEP_TIME_MS = 30;
+  private static final long DEFAULT_MAX_DB_SIZE = 6L * 1024L * 1024L; // 6 MB in bytes
 
   static final String TABLE_CATALYST = "catalystLocalStorage";
   static final String KEY_COLUMN = "key";
@@ -36,10 +44,18 @@ public class ReactDatabaseSupplier extends SQLiteOpenHelper {
 
   private Context mContext;
   private @Nullable SQLiteDatabase mDb;
+  private static @Nullable ReactDatabaseSupplier mReactDatabaseSupplierInstance;
 
-  public ReactDatabaseSupplier(Context context) {
+  private ReactDatabaseSupplier(Context context) {
     super(context, DATABASE_NAME, null, DATABASE_VERSION);
     mContext = context;
+  }
+
+  public static ReactDatabaseSupplier getInstance(Context context) {
+    if (mReactDatabaseSupplierInstance == null) {
+      mReactDatabaseSupplierInstance = new ReactDatabaseSupplier(context);
+    }
+    return mReactDatabaseSupplierInstance;
   }
 
   @Override
@@ -85,6 +101,10 @@ public class ReactDatabaseSupplier extends SQLiteOpenHelper {
     if (mDb == null) {
       throw lastSQLiteException;
     }
+    // This is a sane limit to protect the user from the app storing too much data in the database.
+    // This also protects the database from filling up the disk cache and becoming malformed
+    // (endTransaction() calls will throw an exception, not rollback, and leave the db malformed).
+    mDb.setMaximumSize(DEFAULT_MAX_DB_SIZE);
     return true;
   }
 
@@ -96,11 +116,40 @@ public class ReactDatabaseSupplier extends SQLiteOpenHelper {
     return mDb;
   }
 
-  /* package */ synchronized boolean deleteDatabase() {
+  public synchronized void clearAndCloseDatabase() throws RuntimeException {
+    try {
+      clear();
+      closeDatabase();
+      FLog.d(ReactConstants.TAG, "Cleaned " + DATABASE_NAME);
+    } catch (Exception e) {
+      // Clearing the database has failed, delete it instead.
+      if (deleteDatabase()) {
+        FLog.d(ReactConstants.TAG, "Deleted Local Database " + DATABASE_NAME);
+        return;
+      }
+      // Everything failed, throw
+      throw new RuntimeException("Clearing and deleting database " + DATABASE_NAME + " failed");
+    }
+  }
+
+  /* package */ synchronized void clear() {
+    get().delete(TABLE_CATALYST, null, null);
+  }
+
+  private synchronized boolean deleteDatabase() {
+    closeDatabase();
+    return mContext.deleteDatabase(DATABASE_NAME);
+  }
+
+  private synchronized void closeDatabase() {
     if (mDb != null && mDb.isOpen()) {
       mDb.close();
       mDb = null;
     }
-    return mContext.deleteDatabase(DATABASE_NAME);
+  }
+
+  // For testing purposes only!
+  public static void deleteInstance() {
+    mReactDatabaseSupplierInstance = null;
   }
 }

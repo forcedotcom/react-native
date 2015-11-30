@@ -29,6 +29,7 @@ public class DevInternalSettings implements
     SharedPreferences.OnSharedPreferenceChangeListener {
 
   private static final String PREFS_FPS_DEBUG_KEY = "fps_debug";
+  private static final String PREFS_JS_DEV_MODE_DEBUG_KEY = "js_dev_mode_debug";
   private static final String PREFS_DEBUG_SERVER_HOST_KEY = "debug_http_host";
   private static final String PREFS_ANIMATIONS_DEBUG_KEY = "animations_debug";
   private static final String PREFS_RELOAD_ON_JS_CHANGE_KEY = "reload_on_js_change";
@@ -49,9 +50,18 @@ public class DevInternalSettings implements
     return mPreferences.getBoolean(PREFS_FPS_DEBUG_KEY, false);
   }
 
+  public void setFpsDebugEnabled(boolean enabled) {
+    mPreferences.edit().putBoolean(PREFS_FPS_DEBUG_KEY, enabled).apply();
+  }
+
   @Override
   public boolean isAnimationFpsDebugEnabled() {
     return mPreferences.getBoolean(PREFS_ANIMATIONS_DEBUG_KEY, false);
+  }
+
+  @Override
+  public boolean isJSDevModeEnabled() {
+    return mPreferences.getBoolean(PREFS_JS_DEV_MODE_DEBUG_KEY, true);
   }
 
   public @Nullable String getDebugServerHost() {
@@ -59,12 +69,18 @@ public class DevInternalSettings implements
   }
 
   public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-    if (PREFS_FPS_DEBUG_KEY.equals(key) || PREFS_RELOAD_ON_JS_CHANGE_KEY.equals(key)) {
+    if (PREFS_FPS_DEBUG_KEY.equals(key) ||
+        PREFS_RELOAD_ON_JS_CHANGE_KEY.equals(key) ||
+        PREFS_JS_DEV_MODE_DEBUG_KEY.equals(key)) {
       mDebugManager.reloadSettings();
     }
   }
 
   public boolean isReloadOnJSChangeEnabled() {
     return mPreferences.getBoolean(PREFS_RELOAD_ON_JS_CHANGE_KEY, false);
+  }
+
+  public void setReloadOnJSChangeEnabled(boolean enabled) {
+    mPreferences.edit().putBoolean(PREFS_RELOAD_ON_JS_CHANGE_KEY, enabled).apply();
   }
 }
