@@ -46,8 +46,8 @@ Facebook has a [bounty program](https://www.facebook.com/whitehat/) for the safe
 
 ## How to Get in Touch
 
-* IRC - [#reactnative on freenode](http://webchat.freenode.net/?channels=reactnative)
 * [Facebook group](https://www.facebook.com/groups/react.native.community/)
+* Reactiflux — [#react-native](http://join.reactiflux.com/)
 
 ## Style Guide
 
@@ -74,6 +74,12 @@ Facebook has a [bounty program](https://www.facebook.com/whitehat/) for the safe
 * `- method`, `@interface`, and `@implementation` brackets on the following line
 * *Try* to keep it around 80 characters line length (sometimes it's just not possible...)
 * `*` operator goes with the variable name (e.g. `NSObject *variableName;`)
+
+#### Java
+
+* If a method call spans multiple lines closing bracket is on the same line as the last argument.
+* If a method header doesn't fit on one line each argument goes on a separate line.
+* 100 character line length
 
 ### Documentation
 

@@ -70,15 +70,32 @@ public class NativeModuleRegistry {
 
   /* package */ void notifyCatalystInstanceDestroy() {
     UiThreadUtil.assertOnUiThread();
-    for (NativeModule nativeModule : mModuleInstances.values()) {
-      nativeModule.onCatalystInstanceDestroy();
+    Systrace.beginSection(
+        Systrace.TRACE_TAG_REACT_JAVA_BRIDGE,
+        "NativeModuleRegistry_notifyCatalystInstanceDestroy");
+    try {
+      for (NativeModule nativeModule : mModuleInstances.values()) {
+        nativeModule.onCatalystInstanceDestroy();
+      }
+    } finally {
+      Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
     }
   }
 
   /* package */ void notifyCatalystInstanceInitialized() {
     UiThreadUtil.assertOnUiThread();
-    for (NativeModule nativeModule : mModuleInstances.values()) {
-      nativeModule.initialize();
+
+    ReactMarker.logMarker("NativeModule_start");
+    Systrace.beginSection(
+        Systrace.TRACE_TAG_REACT_JAVA_BRIDGE,
+        "NativeModuleRegistry_notifyCatalystInstanceInitialized");
+    try {
+      for (NativeModule nativeModule : mModuleInstances.values()) {
+        nativeModule.initialize();
+      }
+    } finally {
+      Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
+      ReactMarker.logMarker("NativeModule_end");
     }
   }
 
@@ -182,6 +199,7 @@ public class NativeModuleRegistry {
             MethodRegistration method = module.methods.get(i);
             jg.writeObjectFieldStart(method.name);
             jg.writeNumberField("methodID", i);
+            jg.writeStringField("type", method.method.getType());
             jg.writeEndObject();
           }
           jg.writeEndObject();

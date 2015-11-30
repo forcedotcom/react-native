@@ -24,9 +24,9 @@ var {
 } = React;
 
 var BUTTONS = [
-  'Button Index: 0',
-  'Button Index: 1',
-  'Button Index: 2',
+  'Option 0',
+  'Option 1',
+  'Option 2',
   'Destruct',
   'Cancel',
 ];
@@ -47,7 +47,7 @@ var ActionSheetExample = React.createClass({
           Click to show the ActionSheet
         </Text>
         <Text>
-          Clicked button at index: "{this.state.clicked}"
+          Clicked button: {this.state.clicked}
         </Text>
       </View>
     );
@@ -88,6 +88,8 @@ var ShareActionSheetExample = React.createClass({
   showShareActionSheet() {
     ActionSheetIOS.showShareActionSheetWithOptions({
       url: 'https://code.facebook.com',
+      message: 'message to go with the shared url',
+      subject: 'a subject to go in the email heading',
     },
     (error) => {
       console.error(error);
@@ -99,7 +101,7 @@ var ShareActionSheetExample = React.createClass({
       } else {
         text = 'You didn\'t share';
       }
-      this.setState({text})
+      this.setState({text});
     });
   }
 });

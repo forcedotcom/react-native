@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.facebook.catalyst.uimanager.debug.DebugComponentOwnershipModule;
+import com.facebook.react.bridge.BridgeProfiling;
 import com.facebook.react.bridge.JavaScriptModule;
 import com.facebook.react.bridge.NativeModule;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -21,6 +21,7 @@ import com.facebook.react.modules.core.DefaultHardwareBackBtnHandler;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.modules.core.ExceptionsManagerModule;
 import com.facebook.react.modules.core.JSTimersExecution;
+import com.facebook.react.modules.core.RCTNativeAppEventEmitter;
 import com.facebook.react.modules.core.Timing;
 import com.facebook.react.modules.debug.AnimationsDebugModule;
 import com.facebook.react.modules.debug.SourceCodeModule;
@@ -29,6 +30,7 @@ import com.facebook.react.uimanager.AppRegistry;
 import com.facebook.react.uimanager.ReactNative;
 import com.facebook.react.uimanager.UIManagerModule;
 import com.facebook.react.uimanager.ViewManager;
+import com.facebook.react.uimanager.debug.DebugComponentOwnershipModule;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
 
 /**
@@ -60,7 +62,7 @@ import com.facebook.react.uimanager.events.RCTEventEmitter;
         new ExceptionsManagerModule(mReactInstanceManager.getDevSupportManager()),
         new Timing(catalystApplicationContext),
         new SourceCodeModule(
-            mReactInstanceManager.getDevSupportManager().getSourceUrl(),
+            mReactInstanceManager.getSourceUrl(),
             mReactInstanceManager.getDevSupportManager().getSourceMapUrl()),
         new UIManagerModule(
             catalystApplicationContext,
@@ -74,7 +76,9 @@ import com.facebook.react.uimanager.events.RCTEventEmitter;
         DeviceEventManagerModule.RCTDeviceEventEmitter.class,
         JSTimersExecution.class,
         RCTEventEmitter.class,
+        RCTNativeAppEventEmitter.class,
         AppRegistry.class,
+        BridgeProfiling.class,
         ReactNative.class,
         DebugComponentOwnershipModule.RCTDebugComponentOwnership.class);
   }

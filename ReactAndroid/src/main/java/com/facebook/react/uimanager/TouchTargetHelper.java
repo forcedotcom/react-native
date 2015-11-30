@@ -11,7 +11,6 @@ package com.facebook.react.uimanager;
 
 import javax.annotation.Nullable;
 
-import android.graphics.Rect;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,8 +24,7 @@ import com.facebook.react.bridge.UiThreadUtil;
  */
 public class TouchTargetHelper {
 
-  private static final Rect mVisibleRect = new Rect();
-  private static final int[] mViewLocationInScreen = {0, 0};
+  private static final float[] mEventCoords = new float[2];
 
   /**
    * Find touch event target view within the provided container given the coordinates provided
@@ -41,13 +39,34 @@ public class TouchTargetHelper {
       float eventY,
       float eventX,
       ViewGroup viewGroup) {
+    return findTargetTagAndCoordinatesForTouch(eventY, eventX, viewGroup, mEventCoords);
+  }
+
+  /**
+   * Find touch event target view within the provided container given the coordinates provided
+   * via {@link MotionEvent}.
+   *
+   * @param eventY the Y screen coordinate of the touch location
+   * @param eventX the X screen coordinate of the touch location
+   * @param viewGroup the container view to traverse
+   * @param viewCoords an out parameter that will return the Y,X value in the target view
+   * @return the react tag ID of the child view that should handle the event
+   */
+  public static int findTargetTagAndCoordinatesForTouch(
+      float eventY,
+      float eventX,
+      ViewGroup viewGroup,
+      float[] viewCoords) {
     UiThreadUtil.assertOnUiThread();
     int targetTag = viewGroup.getId();
-    View nativeTargetView = findTouchTargetView(eventX, eventY, viewGroup);
+    // Store eventCoords in array so that they are modified to be relative to the targetView found.
+    viewCoords[0] = eventY;
+    viewCoords[1] = eventX;
+    View nativeTargetView = findTouchTargetView(viewCoords, viewGroup);
     if (nativeTargetView != null) {
       View reactTargetView = findClosestReactAncestor(nativeTargetView);
       if (reactTargetView != null) {
-        targetTag = getTouchTargetForView(reactTargetView, eventX, eventY);
+        targetTag = getTouchTargetForView(reactTargetView, viewCoords[0], viewCoords[1]);
       }
     }
     return targetTag;
@@ -68,28 +87,36 @@ public class TouchTargetHelper {
    * A (pointerEvents: auto) - B (pointerEvents: box-none) - C (pointerEvents: none)
    *  \ D (pointerEvents: auto)  - E (pointerEvents: auto)
    * If the search goes down the first branch, it would return A as the target, which is incorrect.
-   * NB: This method is not thread-safe as it uses static instance of {@link Rect}
+   * NB: This modifies the eventCoords to always be relative to the current viewGroup. When the
+   * method returns, it will contain the eventCoords relative to the targetView found.
    */
-  private static View findTouchTargetView(float eventX, float eventY, ViewGroup viewGroup) {
+  private static View findTouchTargetView(float[] eventCoords, ViewGroup viewGroup) {
     int childrenCount = viewGroup.getChildCount();
     for (int i = childrenCount - 1; i >= 0; i--) {
       View child = viewGroup.getChildAt(i);
-      // Views with `removeClippedSubviews` are exposing removed subviews through `getChildAt` to
-      // support proper view cleanup. Views removed by this option will be detached from it's
-      // parent, therefore `getGlobalVisibleRect` call will return bogus result as it treat view
-      // with no parent as a root of the view hierarchy. To prevent this from happening we check
-      // that view has a parent before visiting it.
-      if (child.getParent() != null && child.getGlobalVisibleRect(mVisibleRect)) {
-        if (eventX >= mVisibleRect.left && eventX <= mVisibleRect.right
-            && eventY >= mVisibleRect.top && eventY <= mVisibleRect.bottom) {
-          View targetView = findTouchTargetViewWithPointerEvents(eventX, eventY, child);
-          if (targetView != null) {
-            return targetView;
-          }
+      if (isTouchPointInView(eventCoords[0], eventCoords[1], viewGroup, child)) {
+        // Apply offset to event coordinates to transform them into the coordinate space of the
+        // child view, taken from {@link ViewGroup#dispatchTransformedTouchEvent()}.
+        eventCoords[0] += viewGroup.getScrollY() - child.getTop();
+        eventCoords[1] += viewGroup.getScrollX() - child.getLeft();
+        View targetView = findTouchTargetViewWithPointerEvents(eventCoords, child);
+        if (targetView != null) {
+          return targetView;
         }
+        eventCoords[0] -= viewGroup.getScrollY() - child.getTop();
+        eventCoords[1] -= viewGroup.getScrollX() - child.getLeft();
       }
     }
     return viewGroup;
+}
+
+  // Taken from {@link ViewGroup#isTransformedTouchPointInView()}
+  private static boolean isTouchPointInView(float y, float x, ViewGroup parent, View child) {
+    float localY = y + parent.getScrollY() - child.getTop();
+    float localX = x + parent.getScrollX() - child.getLeft();
+    // Taken from {@link View#pointInView()}.
+    return localY >= 0 && localY < (child.getBottom() - child.getTop())
+        && localX >= 0 && localX < (child.getRight() - child.getLeft());
   }
 
   /**
@@ -97,9 +124,7 @@ public class TouchTargetHelper {
    * its descendants are the touch target.
    */
   private static @Nullable View findTouchTargetViewWithPointerEvents(
-      float eventX,
-      float eventY,
-      View view) {
+      float eventCoords[], View view) {
     PointerEvents pointerEvents = view instanceof ReactPointerEventsView ?
         ((ReactPointerEventsView) view).getPointerEvents() : PointerEvents.AUTO;
     if (pointerEvents == PointerEvents.NONE) {
@@ -113,7 +138,7 @@ public class TouchTargetHelper {
     } else if (pointerEvents == PointerEvents.BOX_NONE) {
       // This view can't be the target, but its children might
       if (view instanceof ViewGroup) {
-        View targetView = findTouchTargetView(eventX, eventY, (ViewGroup) view);
+        View targetView = findTouchTargetView(eventCoords, (ViewGroup) view);
         return targetView != view ? targetView : null;
       }
       return null;
@@ -121,7 +146,7 @@ public class TouchTargetHelper {
     } else if (pointerEvents == PointerEvents.AUTO) {
       // Either this view or one of its children is the target
       if (view instanceof ViewGroup) {
-        return findTouchTargetView(eventX, eventY, (ViewGroup) view);
+        return findTouchTargetView(eventCoords, (ViewGroup) view);
       }
       return view;
 
@@ -131,14 +156,11 @@ public class TouchTargetHelper {
     }
   }
 
-  private static int getTouchTargetForView(View targetView, float eventX, float eventY) {
+  private static int getTouchTargetForView(View targetView, float eventY, float eventX) {
     if (targetView instanceof ReactCompoundView) {
-      // Use coordinates relative to the view. Use getLocationOnScreen() API, which is slightly more
-      // expensive than getGlobalVisibleRect(), otherwise partially visible views offset is wrong.
-      targetView.getLocationOnScreen(mViewLocationInScreen);
-      return ((ReactCompoundView) targetView).reactTagForTouch(
-          eventX - mViewLocationInScreen[0],
-          eventY - mViewLocationInScreen[1]);
+      // Use coordinates relative to the view, which have been already computed by
+      // {@link #findTouchTargetView()}.
+      return ((ReactCompoundView) targetView).reactTagForTouch(eventX, eventY);
     }
     return targetView.getId();
   }

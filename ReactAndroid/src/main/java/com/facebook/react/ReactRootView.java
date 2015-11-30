@@ -14,6 +14,7 @@ import javax.annotation.Nullable;
 import android.content.Context;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -60,6 +61,9 @@ public class ReactRootView extends SizeMonitoringFrameLayout implements RootView
   private @Nullable String mJSModuleName;
   private @Nullable Bundle mLaunchOptions;
   private int mTargetTag = -1;
+  // Note mTargetCoordinates are Y,X
+  // TODO: t9136625 tracks moving to X,Y
+  private final float[] mTargetCoordinates = new float[2];
   private boolean mChildIsHandlingNativeGesture = false;
   private boolean mWasMeasured = false;
   private boolean mAttachScheduled = false;
@@ -142,8 +146,19 @@ public class ReactRootView extends SizeMonitoringFrameLayout implements RootView
       // {@link #findTargetTagForTouch} to find react view ID that will be responsible for handling
       // this gesture
       mChildIsHandlingNativeGesture = false;
-      mTargetTag = TouchTargetHelper.findTargetTagForTouch(ev.getRawY(), ev.getRawX(), this);
-      eventDispatcher.dispatchEvent(new TouchEvent(mTargetTag, TouchEventType.START, ev));
+      mTargetTag = TouchTargetHelper.findTargetTagAndCoordinatesForTouch(
+          ev.getY(),
+          ev.getX(),
+          this,
+          mTargetCoordinates);
+      eventDispatcher.dispatchEvent(
+          TouchEvent.obtain(
+              mTargetTag,
+              SystemClock.uptimeMillis(),
+              TouchEventType.START,
+              ev,
+              mTargetCoordinates[1],
+              mTargetCoordinates[0]));
     } else if (mChildIsHandlingNativeGesture) {
       // If the touch was intercepted by a child, we've already sent a cancel event to JS for this
       // gesture, so we shouldn't send any more touches related to it.
@@ -158,17 +173,45 @@ public class ReactRootView extends SizeMonitoringFrameLayout implements RootView
     } else if (action == MotionEvent.ACTION_UP) {
       // End of the gesture. We reset target tag to -1 and expect no further event associated with
       // this gesture.
-      eventDispatcher.dispatchEvent(new TouchEvent(mTargetTag, TouchEventType.END, ev));
+      eventDispatcher.dispatchEvent(
+          TouchEvent.obtain(
+              mTargetTag,
+              SystemClock.uptimeMillis(),
+              TouchEventType.END,
+              ev,
+              mTargetCoordinates[1],
+              mTargetCoordinates[0]));
       mTargetTag = -1;
     } else if (action == MotionEvent.ACTION_MOVE) {
       // Update pointer position for current gesture
-      eventDispatcher.dispatchEvent(new TouchEvent(mTargetTag, TouchEventType.MOVE, ev));
+      eventDispatcher.dispatchEvent(
+          TouchEvent.obtain(
+              mTargetTag,
+              SystemClock.uptimeMillis(),
+              TouchEventType.MOVE,
+              ev,
+              mTargetCoordinates[1],
+              mTargetCoordinates[0]));
     } else if (action == MotionEvent.ACTION_POINTER_DOWN) {
       // New pointer goes down, this can only happen after ACTION_DOWN is sent for the first pointer
-      eventDispatcher.dispatchEvent(new TouchEvent(mTargetTag, TouchEventType.START, ev));
+      eventDispatcher.dispatchEvent(
+          TouchEvent.obtain(
+              mTargetTag,
+              SystemClock.uptimeMillis(),
+              TouchEventType.START,
+              ev,
+              mTargetCoordinates[1],
+              mTargetCoordinates[0]));
     } else if (action == MotionEvent.ACTION_POINTER_UP) {
       // Exactly onw of the pointers goes up
-      eventDispatcher.dispatchEvent(new TouchEvent(mTargetTag, TouchEventType.END, ev));
+      eventDispatcher.dispatchEvent(
+          TouchEvent.obtain(
+              mTargetTag,
+              SystemClock.uptimeMillis(),
+              TouchEventType.END,
+              ev,
+              mTargetCoordinates[1],
+              mTargetCoordinates[0]));
     } else if (action == MotionEvent.ACTION_CANCEL) {
       dispatchCancelEvent(ev);
       mTargetTag = -1;
@@ -213,7 +256,13 @@ public class ReactRootView extends SizeMonitoringFrameLayout implements RootView
         !mChildIsHandlingNativeGesture,
         "Expected to not have already sent a cancel for this gesture");
     Assertions.assertNotNull(eventDispatcher).dispatchEvent(
-        new TouchEvent(mTargetTag, TouchEventType.CANCEL, androidEvent));
+        TouchEvent.obtain(
+            mTargetTag,
+            SystemClock.uptimeMillis(),
+            TouchEventType.CANCEL,
+            androidEvent,
+            mTargetCoordinates[1],
+            mTargetCoordinates[0]));
   }
 
   @Override
@@ -285,6 +334,8 @@ public class ReactRootView extends SizeMonitoringFrameLayout implements RootView
       ReactInstanceManager reactInstanceManager,
       String moduleName,
       @Nullable Bundle launchOptions) {
+    UiThreadUtil.assertOnUiThread();
+
     // TODO(6788889): Use POJO instead of bundle here, apparently we can't just use WritableMap
     // here as it may be deallocated in native after passing via JNI bridge, but we want to reuse
     // it in the case of re-creating the catalyst instance
@@ -296,6 +347,10 @@ public class ReactRootView extends SizeMonitoringFrameLayout implements RootView
     mReactInstanceManager = reactInstanceManager;
     mJSModuleName = moduleName;
     mLaunchOptions = launchOptions;
+
+    if (!mReactInstanceManager.hasStartedCreatingInitialContext()) {
+      mReactInstanceManager.createReactContextInBackground();
+    }
 
     // We need to wait for the initial onMeasure, if this view has not yet been measured, we set
     // mAttachScheduled flag, which will make this view startReactApplication itself to instance

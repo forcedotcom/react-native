@@ -9,15 +9,20 @@
 
 package com.facebook.react.modules.fresco;
 
+import java.util.HashSet;
+
 import android.content.Context;
+import android.support.annotation.Nullable;
 
 import com.facebook.cache.common.CacheKey;
+import com.facebook.cache.disk.DiskCacheConfig;
 import com.facebook.common.internal.AndroidPredicates;
 import com.facebook.common.soloader.SoLoaderShim;
 import com.facebook.drawee.backends.pipeline.Fresco;
 import com.facebook.imagepipeline.backends.okhttp.OkHttpImagePipelineConfigFactory;
 import com.facebook.imagepipeline.core.ImagePipelineConfig;
 import com.facebook.imagepipeline.core.ImagePipelineFactory;
+import com.facebook.imagepipeline.listener.RequestListener;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.modules.common.ModuleDataCleaner;
@@ -34,8 +39,25 @@ import com.squareup.okhttp.OkHttpClient;
 public class FrescoModule extends ReactContextBaseJavaModule implements
     ModuleDataCleaner.Cleanable {
 
+  @Nullable private RequestListener mRequestListener;
+  @Nullable private DiskCacheConfig mDiskCacheConfig;
+
   public FrescoModule(ReactApplicationContext reactContext) {
     super(reactContext);
+  }
+
+  public FrescoModule(ReactApplicationContext reactContext, RequestListener listener) {
+    super(reactContext);
+    mRequestListener = listener;
+  }
+
+  public FrescoModule(
+      ReactApplicationContext reactContext,
+      RequestListener listener,
+      DiskCacheConfig diskCacheConfig) {
+    super(reactContext);
+    mRequestListener = listener;
+    mDiskCacheConfig = diskCacheConfig;
   }
 
   @Override
@@ -50,12 +72,28 @@ public class FrescoModule extends ReactContextBaseJavaModule implements
             SoLoader.loadLibrary(libraryName);
           }
         });
+
+    HashSet<RequestListener> requestListeners = new HashSet<>();
+    requestListeners.add(new SystraceRequestListener());
+    if (mRequestListener != null) {
+      requestListeners.add(mRequestListener);
+    }
+
     Context context = this.getReactApplicationContext().getApplicationContext();
-    OkHttpClient okHttpClient = OkHttpClientProvider.getOkHttpClient();
-    ImagePipelineConfig config = OkHttpImagePipelineConfigFactory
-        .newBuilder(context, okHttpClient)
+    OkHttpClient okHttpClient =
+        OkHttpClientProvider.getCookieAwareOkHttpClient(getReactApplicationContext());
+    ImagePipelineConfig.Builder builder =
+        OkHttpImagePipelineConfigFactory.newBuilder(context, okHttpClient);
+
+    builder
         .setDownsampleEnabled(false)
-        .build();
+        .setRequestListeners(requestListeners);
+
+    if (mDiskCacheConfig != null) {
+      builder.setMainDiskCacheConfig(mDiskCacheConfig);
+    }
+
+    ImagePipelineConfig config = builder.build();
     Fresco.initialize(context, config);
   }
 
