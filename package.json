@@ -1,10 +1,6 @@
 {
   "name": "react-native",
-<<<<<<< HEAD
-  "version": "0.12.0",
-=======
-  "version": "0.16.0-rc",
->>>>>>> e5a69770a826cee61bd1a8d9e0417075ce221c27
+  "version": "0.16.0",
   "description": "A framework for building native apps using React",
   "license": "BSD-3-Clause",
   "repository": {
@@ -73,6 +69,7 @@
     "babel-plugin-transform-es2015-computed-properties": "^6.0.14",
     "babel-plugin-transform-es2015-constants": "^6.0.15",
     "babel-plugin-transform-es2015-destructuring": "^6.0.18",
+    "babel-plugin-transform-es2015-for-of": "^6.0.14",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.1.3",
     "babel-plugin-transform-es2015-parameters": "^6.0.18",
     "babel-plugin-transform-es2015-shorthand-properties": "^6.0.14",
@@ -108,24 +105,6 @@
     "promise": "^7.0.4",
     "react-haste": "^0.14.2",
     "react-timer-mixin": "^0.13.2",
-<<<<<<< HEAD
-    "react-tools": "git://github.com/facebook/react#b4e74e38e43ac53af8acd62c78c9213be0194245",
-<<<<<<< HEAD
-    "rebound": "^0.0.12",
-    "regenerator": "0.8.36",
-    "sane": "^1.1.2",
-    "semver": "^4.3.6",
-    "source-map": "0.1.31",
-    "stacktrace-parser": "0.1.3",
-    "uglify-js": "2.4.16",
-    "underscore": "1.7.0",
-    "wordwrap": "^1.0.0",
-    "worker-farm": "^1.3.1",
-    "ws": "0.8.0",
-    "yargs": "1.3.2",
-=======
-=======
->>>>>>> e5a69770a826cee61bd1a8d9e0417075ce221c27
     "rebound": "^0.0.13",
     "regenerator": "^0.8.36",
     "sane": "^1.2.0",
@@ -138,7 +117,6 @@
     "worker-farm": "^1.3.1",
     "ws": "^0.8.0",
     "yargs": "^3.24.0",
->>>>>>> 68c209a831326175690808a7f3d78afec5611d70
     "yeoman-environment": "^1.2.7",
     "yeoman-generator": "^0.20.3"
   },
