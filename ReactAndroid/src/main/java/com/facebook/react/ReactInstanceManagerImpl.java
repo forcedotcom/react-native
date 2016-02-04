@@ -12,7 +12,9 @@ package com.facebook.react;
 import javax.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import android.app.Activity;
 import android.app.Application;
@@ -34,27 +36,33 @@ import com.facebook.react.bridge.JavaScriptExecutor;
 import com.facebook.react.bridge.JavaScriptModule;
 import com.facebook.react.bridge.JavaScriptModulesConfig;
 import com.facebook.react.bridge.NativeModule;
+import com.facebook.react.bridge.NativeModuleCallExceptionHandler;
 import com.facebook.react.bridge.NativeModuleRegistry;
 import com.facebook.react.bridge.NotThreadSafeBridgeIdleDebugListener;
 import com.facebook.react.bridge.ProxyJavaScriptExecutor;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
+import com.facebook.react.bridge.ReactMarker;
 import com.facebook.react.bridge.UiThreadUtil;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.bridge.queue.CatalystQueueConfigurationSpec;
+import com.facebook.react.common.ApplicationHolder;
 import com.facebook.react.common.ReactConstants;
 import com.facebook.react.common.annotations.VisibleForTesting;
 import com.facebook.react.devsupport.DevServerHelper;
 import com.facebook.react.devsupport.DevSupportManager;
+import com.facebook.react.devsupport.DevSupportManagerImpl;
+import com.facebook.react.devsupport.DisabledDevSupportManager;
 import com.facebook.react.devsupport.ReactInstanceDevCommandsHandler;
 import com.facebook.react.modules.core.DefaultHardwareBackBtnHandler;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.uimanager.AppRegistry;
-import com.facebook.react.uimanager.ReactNative;
+import com.facebook.react.uimanager.UIImplementationProvider;
 import com.facebook.react.uimanager.UIManagerModule;
 import com.facebook.react.uimanager.ViewManager;
 import com.facebook.soloader.SoLoader;
+import com.facebook.systrace.Systrace;
 
 /**
  * This class is managing instances of {@link CatalystInstance}. It expose a way to configure
@@ -93,14 +101,19 @@ import com.facebook.soloader.SoLoader;
   private @Nullable DefaultHardwareBackBtnHandler mDefaultBackButtonImpl;
   private String mSourceUrl;
   private @Nullable Activity mCurrentActivity;
+  private final Collection<ReactInstanceEventListener> mReactInstanceEventListeners =
+      new ConcurrentLinkedQueue<>();
   private volatile boolean mHasStartedCreatingInitialContext = false;
+  private final UIImplementationProvider mUIImplementationProvider;
+  private final MemoryPressureRouter mMemoryPressureRouter;
+  private final @Nullable NativeModuleCallExceptionHandler mNativeModuleCallExceptionHandler;
 
   private final ReactInstanceDevCommandsHandler mDevInterface =
       new ReactInstanceDevCommandsHandler() {
 
         @Override
-        public void onReloadWithJSDebugger(JavaJSExecutor jsExecutor) {
-          ReactInstanceManagerImpl.this.onReloadWithJSDebugger(jsExecutor);
+        public void onReloadWithJSDebugger(JavaJSExecutor.Factory jsExecutorFactory) {
+          ReactInstanceManagerImpl.this.onReloadWithJSDebugger(jsExecutorFactory);
         }
 
         @Override
@@ -123,18 +136,18 @@ import com.facebook.soloader.SoLoader;
       };
 
   private class ReactContextInitParams {
-    private final JavaScriptExecutor mJsExecutor;
+    private final JavaScriptExecutor.Factory mJsExecutorFactory;
     private final JSBundleLoader mJsBundleLoader;
 
     public ReactContextInitParams(
-        JavaScriptExecutor jsExecutor,
+        JavaScriptExecutor.Factory jsExecutorFactory,
         JSBundleLoader jsBundleLoader) {
-      mJsExecutor = Assertions.assertNotNull(jsExecutor);
+      mJsExecutorFactory = Assertions.assertNotNull(jsExecutorFactory);
       mJsBundleLoader = Assertions.assertNotNull(jsBundleLoader);
     }
 
-    public JavaScriptExecutor getJsExecutor() {
-      return mJsExecutor;
+    public JavaScriptExecutor.Factory getJsExecutorFactory() {
+      return mJsExecutorFactory;
     }
 
     public JSBundleLoader getJsBundleLoader() {
@@ -147,8 +160,7 @@ import com.facebook.soloader.SoLoader;
    * be executing one at time, see {@link #recreateReactContextInBackground()}.
    */
   private final class ReactContextInitAsyncTask extends
-      AsyncTask<ReactContextInitParams, Void, ReactApplicationContext> {
-
+      AsyncTask<ReactContextInitParams, Void, Result<ReactApplicationContext>> {
     @Override
     protected void onPreExecute() {
       if (mCurrentReactContext != null) {
@@ -158,15 +170,23 @@ import com.facebook.soloader.SoLoader;
     }
 
     @Override
-    protected ReactApplicationContext doInBackground(ReactContextInitParams... params) {
+    protected Result<ReactApplicationContext> doInBackground(ReactContextInitParams... params) {
       Assertions.assertCondition(params != null && params.length > 0 && params[0] != null);
-      return createReactContext(params[0].getJsExecutor(), params[0].getJsBundleLoader());
+      try {
+        JavaScriptExecutor jsExecutor = params[0].getJsExecutorFactory().create();
+        return Result.of(createReactContext(jsExecutor, params[0].getJsBundleLoader()));
+      } catch (Exception e) {
+        // Pass exception to onPostExecute() so it can be handled on the main thread
+        return Result.of(e);
+      }
     }
 
     @Override
-    protected void onPostExecute(ReactApplicationContext reactContext) {
+    protected void onPostExecute(Result<ReactApplicationContext> result) {
       try {
-        setupReactContext(reactContext);
+        setupReactContext(result.get());
+      } catch (Exception e) {
+        mDevSupportManager.handleException(e);
       } finally {
         mIsContextInitAsyncTaskRunning = false;
       }
@@ -174,10 +194,43 @@ import com.facebook.soloader.SoLoader;
       // Handle enqueued request to re-initialize react context.
       if (mPendingReactContextInitParams != null) {
         recreateReactContextInBackground(
-            mPendingReactContextInitParams.getJsExecutor(),
+            mPendingReactContextInitParams.getJsExecutorFactory(),
             mPendingReactContextInitParams.getJsBundleLoader());
         mPendingReactContextInitParams = null;
       }
+    }
+  }
+
+  private static class Result<T> {
+    @Nullable private final T mResult;
+    @Nullable private final Exception mException;
+
+    public static <T, U extends T> Result<T> of(U result) {
+      return new Result<T>(result);
+    }
+
+    public static <T> Result<T> of(Exception exception) {
+      return new Result<>(exception);
+    }
+
+    private Result(T result) {
+      mException = null;
+      mResult = result;
+    }
+
+    private Result(Exception exception) {
+      mException = exception;
+      mResult = null;
+    }
+
+    public T get() throws Exception {
+      if (mException != null) {
+        throw mException;
+      }
+
+      Assertions.assertNotNull(mResult);
+
+      return mResult;
     }
   }
 
@@ -188,25 +241,33 @@ import com.facebook.soloader.SoLoader;
       List<ReactPackage> packages,
       boolean useDeveloperSupport,
       @Nullable NotThreadSafeBridgeIdleDebugListener bridgeIdleDebugListener,
-      LifecycleState initialLifecycleState) {
+      LifecycleState initialLifecycleState,
+      UIImplementationProvider uiImplementationProvider,
+      NativeModuleCallExceptionHandler nativeModuleCallExceptionHandler) {
     initializeSoLoaderIfNecessary(applicationContext);
+
+    // TODO(9577825): remove this
+    ApplicationHolder.setApplication((Application) applicationContext.getApplicationContext());
 
     mApplicationContext = applicationContext;
     mJSBundleFile = jsBundleFile;
     mJSMainModuleName = jsMainModuleName;
     mPackages = packages;
     mUseDeveloperSupport = useDeveloperSupport;
-    // We need to instantiate DevSupportManager regardless to the useDeveloperSupport option,
-    // although will prevent dev support manager from displaying any options or dialogs by
-    // checking useDeveloperSupport option before calling setDevSupportEnabled on this manager
-    // TODO(6803830): Don't instantiate devsupport manager when useDeveloperSupport is false
-    mDevSupportManager = new DevSupportManager(
-        applicationContext,
-        mDevInterface,
-        mJSMainModuleName,
-        useDeveloperSupport);
+    if (mUseDeveloperSupport) {
+      mDevSupportManager = new DevSupportManagerImpl(
+          applicationContext,
+          mDevInterface,
+          mJSMainModuleName,
+          useDeveloperSupport);
+    } else {
+      mDevSupportManager = new DisabledDevSupportManager();
+    }
     mBridgeIdleDebugListener = bridgeIdleDebugListener;
     mLifecycleState = initialLifecycleState;
+    mUIImplementationProvider = uiImplementationProvider;
+    mMemoryPressureRouter = new MemoryPressureRouter(applicationContext);
+    mNativeModuleCallExceptionHandler = nativeModuleCallExceptionHandler;
   }
 
   @Override
@@ -297,7 +358,7 @@ import com.facebook.soloader.SoLoader;
 
   private void recreateReactContextInBackgroundFromBundleFile() {
     recreateReactContextInBackground(
-        new JSCJavaScriptExecutor(),
+        new JSCJavaScriptExecutor.Factory(),
         JSBundleLoader.createFileLoader(mApplicationContext, mJSBundleFile));
   }
 
@@ -392,6 +453,7 @@ import com.facebook.soloader.SoLoader;
   public void onDestroy() {
     UiThreadUtil.assertOnUiThread();
 
+    mMemoryPressureRouter.destroy(mApplicationContext);
     if (mUseDeveloperSupport) {
       mDevSupportManager.setDevSupportEnabled(false);
     }
@@ -401,6 +463,7 @@ import com.facebook.soloader.SoLoader;
       mCurrentReactContext = null;
       mHasStartedCreatingInitialContext = false;
     }
+    mCurrentActivity = null;
   }
 
   @Override
@@ -465,11 +528,21 @@ import com.facebook.soloader.SoLoader;
   @Override
   public List<ViewManager> createAllViewManagers(
       ReactApplicationContext catalystApplicationContext) {
-    List<ViewManager> allViewManagers = new ArrayList<>();
-    for (ReactPackage reactPackage : mPackages) {
-      allViewManagers.addAll(reactPackage.createViewManagers(catalystApplicationContext));
+    Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, "createAllViewManagers");
+    try {
+      List<ViewManager> allViewManagers = new ArrayList<>();
+      for (ReactPackage reactPackage : mPackages) {
+        allViewManagers.addAll(reactPackage.createViewManagers(catalystApplicationContext));
+      }
+      return allViewManagers;
+    } finally {
+      Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
     }
-    return allViewManagers;
+  }
+
+  @Override
+  public void addReactInstanceEventListener(ReactInstanceEventListener listener) {
+    mReactInstanceEventListeners.add(listener);
   }
 
   @VisibleForTesting
@@ -478,27 +551,29 @@ import com.facebook.soloader.SoLoader;
     return mCurrentReactContext;
   }
 
-  private void onReloadWithJSDebugger(JavaJSExecutor jsExecutor) {
+  private void onReloadWithJSDebugger(JavaJSExecutor.Factory jsExecutorFactory) {
     recreateReactContextInBackground(
-        new ProxyJavaScriptExecutor(jsExecutor),
+        new ProxyJavaScriptExecutor.Factory(jsExecutorFactory),
         JSBundleLoader.createRemoteDebuggerBundleLoader(
-            mDevSupportManager.getJSBundleURLForRemoteDebugging()));
+            mDevSupportManager.getJSBundleURLForRemoteDebugging(),
+            mDevSupportManager.getSourceUrl()));
   }
 
   private void onJSBundleLoadedFromServer() {
     recreateReactContextInBackground(
-        new JSCJavaScriptExecutor(),
+        new JSCJavaScriptExecutor.Factory(),
         JSBundleLoader.createCachedBundleFromNetworkLoader(
             mDevSupportManager.getSourceUrl(),
             mDevSupportManager.getDownloadedJSBundleFile()));
   }
 
   private void recreateReactContextInBackground(
-      JavaScriptExecutor jsExecutor,
+      JavaScriptExecutor.Factory jsExecutorFactory,
       JSBundleLoader jsBundleLoader) {
     UiThreadUtil.assertOnUiThread();
 
-    ReactContextInitParams initParams = new ReactContextInitParams(jsExecutor, jsBundleLoader);
+    ReactContextInitParams initParams =
+        new ReactContextInitParams(jsExecutorFactory, jsBundleLoader);
     if (!mIsContextInitAsyncTaskRunning) {
       // No background task to create react context is currently running, create and execute one.
       ReactContextInitAsyncTask initTask = new ReactContextInitAsyncTask();
@@ -520,10 +595,15 @@ import com.facebook.soloader.SoLoader;
 
     catalystInstance.initialize();
     mDevSupportManager.onNewReactContextCreated(reactContext);
+    mMemoryPressureRouter.onNewReactContextCreated(reactContext);
     moveReactContextToCurrentLifecycleState(reactContext);
 
     for (ReactRootView rootView : mAttachedRootViews) {
       attachMeasuredRootViewToInstance(rootView, catalystInstance);
+    }
+
+    for (ReactInstanceEventListener listener : mReactInstanceEventListeners) {
+      listener.onReactContextInitialized(reactContext);
     }
   }
 
@@ -554,8 +634,8 @@ import com.facebook.soloader.SoLoader;
       ReactRootView rootView,
       CatalystInstance catalystInstance) {
     UiThreadUtil.assertOnUiThread();
-    catalystInstance.getJSModule(ReactNative.class)
-        .unmountComponentAtNodeAndRemoveContainer(rootView.getId());
+    catalystInstance.getJSModule(AppRegistry.class)
+        .unmountApplicationComponentAtRootTag(rootView.getId());
   }
 
   private void tearDownReactContext(ReactContext reactContext) {
@@ -568,6 +648,7 @@ import com.facebook.soloader.SoLoader;
     }
     reactContext.onDestroy();
     mDevSupportManager.onReactInstanceDestroyed(reactContext);
+    mMemoryPressureRouter.onReactInstanceDestroyed();
   }
 
   /**
@@ -577,6 +658,7 @@ import com.facebook.soloader.SoLoader;
       JavaScriptExecutor jsExecutor,
       JSBundleLoader jsBundleLoader) {
     FLog.i(ReactConstants.TAG, "Creating react context.");
+    ReactMarker.logMarker("CREATE_REACT_CONTEXT_START");
     mSourceUrl = jsBundleLoader.getSourceUrl();
     NativeModuleRegistry.Builder nativeRegistryBuilder = new NativeModuleRegistry.Builder();
     JavaScriptModulesConfig.Builder jsModulesBuilder = new JavaScriptModulesConfig.Builder();
@@ -586,31 +668,78 @@ import com.facebook.soloader.SoLoader;
       reactContext.setNativeModuleCallExceptionHandler(mDevSupportManager);
     }
 
-    CoreModulesPackage coreModulesPackage =
-        new CoreModulesPackage(this, mBackBtnHandler);
-    processPackage(coreModulesPackage, reactContext, nativeRegistryBuilder, jsModulesBuilder);
+    Systrace.beginSection(
+        Systrace.TRACE_TAG_REACT_JAVA_BRIDGE,
+        "createAndProcessCoreModulesPackage");
+    try {
+      CoreModulesPackage coreModulesPackage =
+          new CoreModulesPackage(this, mBackBtnHandler, mUIImplementationProvider);
+      processPackage(coreModulesPackage, reactContext, nativeRegistryBuilder, jsModulesBuilder);
+    } finally {
+      Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
+    }
 
     // TODO(6818138): Solve use-case of native/js modules overriding
     for (ReactPackage reactPackage : mPackages) {
-      processPackage(reactPackage, reactContext, nativeRegistryBuilder, jsModulesBuilder);
+      Systrace.beginSection(
+          Systrace.TRACE_TAG_REACT_JAVA_BRIDGE,
+          "createAndProcessCustomReactPackage");
+      try {
+        processPackage(reactPackage, reactContext, nativeRegistryBuilder, jsModulesBuilder);
+      } finally {
+        Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
+      }
     }
 
+    Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, "buildNativeModuleRegistry");
+    NativeModuleRegistry nativeModuleRegistry;
+    try {
+       nativeModuleRegistry = nativeRegistryBuilder.build();
+    } finally {
+      Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
+    }
+
+    Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, "buildJSModuleConfig");
+    JavaScriptModulesConfig javaScriptModulesConfig;
+    try {
+      javaScriptModulesConfig = jsModulesBuilder.build();
+    } finally {
+      Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
+    }
+
+    NativeModuleCallExceptionHandler exceptionHandler = mNativeModuleCallExceptionHandler != null
+        ? mNativeModuleCallExceptionHandler
+        : mDevSupportManager;
     CatalystInstanceImpl.Builder catalystInstanceBuilder = new CatalystInstanceImpl.Builder()
         .setCatalystQueueConfigurationSpec(CatalystQueueConfigurationSpec.createDefault())
         .setJSExecutor(jsExecutor)
-        .setRegistry(nativeRegistryBuilder.build())
-        .setJSModulesConfig(jsModulesBuilder.build())
+        .setRegistry(nativeModuleRegistry)
+        .setJSModulesConfig(javaScriptModulesConfig)
         .setJSBundleLoader(jsBundleLoader)
-        .setNativeModuleCallExceptionHandler(mDevSupportManager);
+        .setNativeModuleCallExceptionHandler(exceptionHandler);
 
-    CatalystInstance catalystInstance = catalystInstanceBuilder.build();
+    Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, "createCatalystInstance");
+    CatalystInstance catalystInstance;
+    try {
+      catalystInstance = catalystInstanceBuilder.build();
+    } finally {
+      Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
+    }
+
     if (mBridgeIdleDebugListener != null) {
       catalystInstance.addBridgeIdleDebugListener(mBridgeIdleDebugListener);
     }
 
     reactContext.initializeWithInstance(catalystInstance);
-    catalystInstance.runJSBundle();
 
+    Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, "runJSBundle");
+    try {
+      catalystInstance.runJSBundle();
+    } finally {
+      Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
+    }
+
+    ReactMarker.logMarker("CREATE_REACT_CONTEXT_END");
     return reactContext;
   }
 

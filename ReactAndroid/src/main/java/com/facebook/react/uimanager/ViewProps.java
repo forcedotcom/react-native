@@ -70,6 +70,7 @@ public class ViewProps {
   public static final String ON = "on";
   public static final String RESIZE_MODE = "resizeMode";
   public static final String TEXT_ALIGN = "textAlign";
+  public static final String TEXT_ALIGN_VERTICAL = "textAlignVertical";
 
   public static final String BORDER_WIDTH = "borderWidth";
   public static final String BORDER_LEFT_WIDTH = "borderLeftWidth";
@@ -84,7 +85,7 @@ public class ViewProps {
       Spacing.BOTTOM
   };
 
-  /*package*/ static final HashSet<String> LAYOUT_ONLY_PROPS = new HashSet<>(
+  private static final HashSet<String> LAYOUT_ONLY_PROPS = new HashSet<>(
       Arrays.asList(
             ALIGN_SELF,
             ALIGN_ITEMS,

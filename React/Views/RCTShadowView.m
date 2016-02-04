@@ -241,7 +241,7 @@ static void RCTProcessMetaProps(const float metaProps[META_PROP_COUNT], float st
   [self applySizeConstraints];
 
   [self fillCSSNode:_cssNode];
-  layoutNode(_cssNode, CSS_UNDEFINED, CSS_DIRECTION_INHERIT);
+  layoutNode(_cssNode, CSS_UNDEFINED, CSS_UNDEFINED, CSS_DIRECTION_INHERIT);
 
   NSMutableSet<RCTShadowView *> *viewsWithNewFrame = [NSMutableSet set];
   [self applyLayoutNode:_cssNode viewsWithNewFrame:viewsWithNewFrame absolutePosition:CGPointZero];
@@ -580,7 +580,7 @@ RCT_STYLE_PROPERTY(FlexWrap, flexWrap, flex_wrap, css_wrap_type_t)
   [self dirtyPropagation];
 }
 
-- (void)updateLayout
+- (void)didSetProps:(__unused NSArray<NSString *> *)changedProps
 {
   if (_recomputePadding) {
     RCTProcessMetaProps(_paddingMetaProps, _cssNode->style.padding);

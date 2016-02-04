@@ -53,7 +53,7 @@ function setUpConsole() {
  * For more info on that particular case, see:
  * https://github.com/facebook/react-native/issues/934
  */
-function polyfillGlobal(name, newValue, scope=GLOBAL) {
+function polyfillGlobal(name, newValue, scope = GLOBAL) {
   var descriptor = Object.getOwnPropertyDescriptor(scope, name) || {
     // jest for some bad reasons runs the polyfill code multiple times. In jest
     // environment, XmlHttpRequest doesn't exist so getOwnPropertyDescriptor
@@ -117,15 +117,11 @@ function setUpTimers() {
 }
 
 function setUpAlert() {
-  var RCTAlertManager = require('NativeModules').AlertManager;
   if (!GLOBAL.alert) {
     GLOBAL.alert = function(text) {
-      var alertOpts = {
-        title: 'Alert',
-        message: '' + text,
-        buttons: [{'cancel': 'OK'}],
-      };
-      RCTAlertManager.alertWithArgs(alertOpts, function () {});
+      // Require Alert on demand. Requiring it too early can lead to issues
+      // with things like Platform not being fully initialized.
+      require('Alert').alert('Alert', '' + text);
     };
   }
 }
@@ -154,15 +150,19 @@ function setUpGeolocation() {
   polyfillGlobal('geolocation', require('Geolocation'), GLOBAL.navigator);
 }
 
+function setUpProduct() {
+  Object.defineProperty(GLOBAL.navigator, 'product', {value: 'ReactNative'});
+}
+
+
 function setUpWebSockets() {
   polyfillGlobal('WebSocket', require('WebSocket'));
 }
 
 function setUpProfile() {
   if (__DEV__) {
-    var BridgeProfiling = require('BridgeProfiling');
-    BridgeProfiling.swizzleReactPerf();
-    BridgeProfiling.attachToRelayProfiler();
+    var Systrace = require('Systrace');
+    Systrace.swizzleReactPerf();
   }
 }
 
@@ -198,6 +198,7 @@ setUpPromise();
 setUpErrorHandler();
 setUpXHR();
 setUpGeolocation();
+setUpProduct();
 setUpWebSockets();
 setUpProfile();
 setUpFlowChecker();
@@ -211,3 +212,8 @@ if (__DEV__) {
 }
 require('RCTDeviceEventEmitter');
 require('PerformanceLogger');
+
+if (__DEV__) {
+  // include this transform and it's dependencies on the bundle on dev mode
+  require('react-transform-hmr');
+}

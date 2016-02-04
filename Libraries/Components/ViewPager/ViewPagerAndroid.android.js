@@ -7,14 +7,12 @@
 'use strict';
 
 var NativeMethodsMixin = require('NativeMethodsMixin');
-var NativeModules = require('NativeModules');
 var React = require('React');
 var ReactElement = require('ReactElement');
 var ReactNativeViewAttributes = require('ReactNativeViewAttributes');
 var ReactPropTypes = require('ReactPropTypes');
+var UIManager = require('UIManager');
 var View = require('View');
-
-var RCTUIManager = NativeModules.UIManager;
 
 var dismissKeyboard = require('dismissKeyboard');
 var requireNativeComponent = require('requireNativeComponent');
@@ -24,7 +22,7 @@ var VIEWPAGER_REF = 'viewPager';
 /**
  * Container that allows to flip left and right between child views. Each
  * child view of the `ViewPagerAndroid` will be treated as a separate page
- * and will be streched to fill the `ViewPagerAndroid`.
+ * and will be stretched to fill the `ViewPagerAndroid`.
  *
  * It is important all children are `<View>`s and not composite components.
  * You can set style properties like `padding` or `backgroundColor` for each
@@ -81,7 +79,7 @@ var ViewPagerAndroid = React.createClass({
     onPageScroll: ReactPropTypes.func,
 
     /**
-     * This callback will be caleld once ViewPager finish navigating to selected page
+     * This callback will be called once ViewPager finish navigating to selected page
      * (when user swipes between pages). The `event.nativeEvent` object passed to this
      * callback will have following fields:
      *  - position - index of page that has been selected
@@ -114,6 +112,9 @@ var ViewPagerAndroid = React.createClass({
     // will handle positioning of elements, so it's not important to offset
     // them correctly.
     return React.Children.map(this.props.children, function(child) {
+      if (!child) {
+        return null;
+      }
       var newProps = {
         ...child.props,
         style: [child.props.style, {
@@ -157,9 +158,9 @@ var ViewPagerAndroid = React.createClass({
    * The transition between pages will be animated.
    */
   setPage: function(selectedPage: number) {
-    RCTUIManager.dispatchViewManagerCommand(
+    UIManager.dispatchViewManagerCommand(
       React.findNodeHandle(this),
-      RCTUIManager.AndroidViewPager.Commands.setPage,
+      UIManager.AndroidViewPager.Commands.setPage,
       [selectedPage],
     );
   },
@@ -169,9 +170,9 @@ var ViewPagerAndroid = React.createClass({
    * The transition between pages will be *not* be animated.
    */
   setPageWithoutAnimation: function(selectedPage: number) {
-    RCTUIManager.dispatchViewManagerCommand(
+    UIManager.dispatchViewManagerCommand(
       React.findNodeHandle(this),
-      RCTUIManager.AndroidViewPager.Commands.setPageWithoutAnimation,
+      UIManager.AndroidViewPager.Commands.setPageWithoutAnimation,
       [selectedPage],
     );
   },

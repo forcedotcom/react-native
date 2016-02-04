@@ -21,6 +21,8 @@
 
 #import "RCTLog.h"
 
+NSString *const RCTErrorUnspecified = @"EUNSPECIFIED";
+
 NSString *RCTJSONStringify(id jsonObject, NSError **error)
 {
   static SEL JSONKitSelector = NULL;
@@ -183,18 +185,29 @@ NSString *RCTMD5Hash(NSString *string)
   ];
 }
 
+void RCTExecuteOnMainThread(dispatch_block_t block, BOOL sync)
+{
+  if ([NSThread isMainThread]) {
+    block();
+  } else if (sync) {
+    dispatch_sync(dispatch_get_main_queue(), ^{
+      block();
+    });
+  } else {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      block();
+    });
+  }
+}
+
 CGFloat RCTScreenScale()
 {
   static CGFloat scale;
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
-    if (![NSThread isMainThread]) {
-      dispatch_sync(dispatch_get_main_queue(), ^{
-        scale = [UIScreen mainScreen].scale;
-      });
-    } else {
+    RCTExecuteOnMainThread(^{
       scale = [UIScreen mainScreen].scale;
-    }
+    }, YES);
   });
 
   return scale;
@@ -205,13 +218,9 @@ CGSize RCTScreenSize()
   static CGSize size;
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
-    if (![NSThread isMainThread]) {
-      dispatch_sync(dispatch_get_main_queue(), ^{
-        size = [UIScreen mainScreen].bounds.size;
-      });
-    } else {
+    RCTExecuteOnMainThread(^{
       size = [UIScreen mainScreen].bounds.size;
-    }
+    }, YES);
   });
 
   return size;
@@ -306,26 +315,33 @@ NSDictionary<NSString *, id> *RCTMakeAndLogError(NSString *message, id toStringi
   return error;
 }
 
-// TODO: Can we just replace RCTMakeError with this function instead?
 NSDictionary<NSString *, id> *RCTJSErrorFromNSError(NSError *error)
+{
+  return RCTJSErrorFromCodeMessageAndNSError(RCTErrorUnspecified, nil, error);
+}
+
+// TODO: Can we just replace RCTMakeError with this function instead?
+NSDictionary<NSString *, id> *RCTJSErrorFromCodeMessageAndNSError(NSString *code, NSString *message, NSError *error)
 {
   NSString *errorMessage;
   NSArray<NSString *> *stackTrace = [NSThread callStackSymbols];
   NSMutableDictionary<NSString *, id> *errorInfo =
-    [NSMutableDictionary dictionaryWithObject:stackTrace forKey:@"nativeStackIOS"];
+  [NSMutableDictionary dictionaryWithObject:stackTrace forKey:@"nativeStackIOS"];
 
   if (error) {
     errorMessage = error.localizedDescription ?: @"Unknown error from a native module";
     errorInfo[@"domain"] = error.domain ?: RCTErrorDomain;
-    errorInfo[@"code"] = @(error.code);
   } else {
     errorMessage = @"Unknown error from a native module";
     errorInfo[@"domain"] = RCTErrorDomain;
-    errorInfo[@"code"] = @-1;
   }
+  errorInfo[@"code"] = code ?: RCTErrorUnspecified;
+  // Allow for explicit overriding of the error message
+  errorMessage = message ?: errorMessage;
 
   return RCTMakeError(errorMessage, nil, errorInfo);
 }
+
 
 BOOL RCTRunningInTestEnvironment(void)
 {
@@ -413,6 +429,11 @@ id RCTNilIfNull(id value)
   return value == (id)kCFNull ? nil : value;
 }
 
+RCT_EXTERN double RCTZeroIfNaN(double value)
+{
+  return isnan(value) || isinf(value) ? 0 : value;
+}
+
 NSURL *RCTDataURL(NSString *mimeType, NSData *data)
 {
   return [NSURL URLWithString:
@@ -482,7 +503,11 @@ NSString *RCTBundlePathForURL(NSURL *URL)
     // Not a bundle-relative file
     return nil;
   }
-  return [path substringFromIndex:bundlePath.length + 1];
+  path = [path substringFromIndex:bundlePath.length];
+  if ([path hasPrefix:@"/"]) {
+    path = [path substringFromIndex:1];
+  }
+  return path;
 }
 
 BOOL RCTIsXCAssetURL(NSURL *imageURL)
@@ -503,4 +528,144 @@ BOOL RCTIsXCAssetURL(NSURL *imageURL)
     return NO;
   }
   return YES;
+}
+
+static void RCTGetRGBAColorComponents(CGColorRef color, CGFloat rgba[4])
+{
+  CGColorSpaceModel model = CGColorSpaceGetModel(CGColorGetColorSpace(color));
+  const CGFloat *components = CGColorGetComponents(color);
+  switch (model)
+  {
+    case kCGColorSpaceModelMonochrome:
+    {
+      rgba[0] = components[0];
+      rgba[1] = components[0];
+      rgba[2] = components[0];
+      rgba[3] = components[1];
+      break;
+    }
+    case kCGColorSpaceModelRGB:
+    {
+      rgba[0] = components[0];
+      rgba[1] = components[1];
+      rgba[2] = components[2];
+      rgba[3] = components[3];
+      break;
+    }
+    case kCGColorSpaceModelCMYK:
+    case kCGColorSpaceModelDeviceN:
+    case kCGColorSpaceModelIndexed:
+    case kCGColorSpaceModelLab:
+    case kCGColorSpaceModelPattern:
+    case kCGColorSpaceModelUnknown:
+    {
+
+#ifdef RCT_DEBUG
+      //unsupported format
+      RCTLogError(@"Unsupported color model: %i", model);
+#endif
+
+      rgba[0] = 0.0;
+      rgba[1] = 0.0;
+      rgba[2] = 0.0;
+      rgba[3] = 1.0;
+      break;
+    }
+  }
+}
+
+NSString *RCTColorToHexString(CGColorRef color)
+{
+  CGFloat rgba[4];
+  RCTGetRGBAColorComponents(color, rgba);
+  uint8_t r = rgba[0]*255;
+  uint8_t g = rgba[1]*255;
+  uint8_t b = rgba[2]*255;
+  uint8_t a = rgba[3]*255;
+  if (a < 255) {
+    return [NSString stringWithFormat:@"#%02x%02x%02x%02x", r, g, b, a];
+  } else {
+    return [NSString stringWithFormat:@"#%02x%02x%02x", r, g, b];
+  }
+}
+
+// (https://github.com/0xced/XCDFormInputAccessoryView/blob/master/XCDFormInputAccessoryView/XCDFormInputAccessoryView.m#L10-L14)
+NSString *RCTUIKitLocalizedString(NSString *string)
+{
+  NSBundle *UIKitBundle = [NSBundle bundleForClass:[UIApplication class]];
+  return UIKitBundle ? [UIKitBundle localizedStringForKey:string value:string table:nil] : string;
+}
+
+NSString *RCTGetURLQueryParam(NSURL *URL, NSString *param)
+{
+  RCTAssertParam(param);
+  if (!URL) {
+    return nil;
+  }
+  NSURLComponents *components = [NSURLComponents componentsWithURL:URL
+                                           resolvingAgainstBaseURL:YES];
+
+  // TODO: use NSURLComponents.queryItems once we drop support for iOS 7
+  for (NSString *item in [components.percentEncodedQuery componentsSeparatedByString:@"&"].reverseObjectEnumerator) {
+    NSArray *keyValue = [item componentsSeparatedByString:@"="];
+    NSString *key = [keyValue.firstObject stringByRemovingPercentEncoding];
+    if ([key isEqualToString:param]) {
+      return [keyValue.lastObject stringByRemovingPercentEncoding];
+    }
+  }
+  return nil;
+}
+
+NSURL *RCTURLByReplacingQueryParam(NSURL *URL, NSString *param, NSString *value)
+{
+  RCTAssertParam(param);
+  if (!URL) {
+    return nil;
+  }
+  NSURLComponents *components = [NSURLComponents componentsWithURL:URL
+                                           resolvingAgainstBaseURL:YES];
+
+  // TODO: use NSURLComponents.queryItems once we drop support for iOS 7
+
+  // Unhelpfully, iOS doesn't provide this set as a constant
+  static NSCharacterSet *URLParamCharacterSet;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    NSMutableCharacterSet *characterSet = [NSMutableCharacterSet new];
+    [characterSet formUnionWithCharacterSet:[NSCharacterSet URLQueryAllowedCharacterSet]];
+    [characterSet removeCharactersInString:@"&=?"];
+    URLParamCharacterSet = [characterSet copy];
+  });
+
+  NSString *encodedParam =
+  [param stringByAddingPercentEncodingWithAllowedCharacters:URLParamCharacterSet];
+
+  __block NSInteger paramIndex = NSNotFound;
+  NSMutableArray *queryItems = [[components.percentEncodedQuery componentsSeparatedByString:@"&"] mutableCopy];
+  [queryItems enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:
+   ^(NSString *item, NSUInteger i, BOOL *stop) {
+     NSArray *keyValue = [item componentsSeparatedByString:@"="];
+     if ([keyValue.firstObject isEqualToString:encodedParam]) {
+       paramIndex = i;
+       *stop = YES;
+     }
+   }];
+
+  if (!value) {
+    if (paramIndex != NSNotFound) {
+      [queryItems removeObjectAtIndex:paramIndex];
+    }
+  } else {
+    NSString *encodedValue =
+    [value stringByAddingPercentEncodingWithAllowedCharacters:URLParamCharacterSet];
+
+    NSString *newItem = [encodedParam stringByAppendingFormat:@"=%@", encodedValue];
+    if (paramIndex == NSNotFound) {
+      [queryItems addObject:newItem];
+    } else {
+      [queryItems replaceObjectAtIndex:paramIndex withObject:newItem];
+    }
+  }
+  components.percentEncodedQuery = [queryItems componentsJoinedByString:@"&"];
+  return components.URL;
 }

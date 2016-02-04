@@ -14,8 +14,8 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Collection;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -56,6 +56,7 @@ public class CatalystInstanceImpl implements CatalystInstance {
   private final TraceListener mTraceListener;
   private final JavaScriptModuleRegistry mJSModuleRegistry;
   private final JSBundleLoader mJSBundleLoader;
+  private volatile int mTraceID = 0;
 
   // Access from native modules thread
   private final NativeModuleRegistry mJavaRegistry;
@@ -63,7 +64,7 @@ public class CatalystInstanceImpl implements CatalystInstance {
   private boolean mInitialized = false;
 
   // Access from JS thread
-  private @Nullable ReactBridge mBridge;
+  private final ReactBridge mBridge;
   private boolean mJSBundleHasLoaded;
 
   private CatalystInstanceImpl(
@@ -83,74 +84,84 @@ public class CatalystInstanceImpl implements CatalystInstance {
     mNativeModuleCallExceptionHandler = nativeModuleCallExceptionHandler;
     mTraceListener = new JSProfilerTraceListener();
 
-    final CountDownLatch initLatch = new CountDownLatch(1);
-    mCatalystQueueConfiguration.getJSQueueThread().runOnQueue(
-        new Runnable() {
-          @Override
-          public void run() {
-            initializeBridge(jsExecutor, jsModulesConfig);
-            initLatch.countDown();
-          }
-        });
-
     try {
-      Assertions.assertCondition(
-          initLatch.await(BRIDGE_SETUP_TIMEOUT_MS, TimeUnit.MILLISECONDS),
-          "Timed out waiting for bridge to initialize!");
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
+      mBridge = mCatalystQueueConfiguration.getJSQueueThread().callOnQueue(
+          new Callable<ReactBridge>() {
+            @Override
+            public ReactBridge call() throws Exception {
+              Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, "initializeBridge");
+              try {
+                return initializeBridge(jsExecutor, jsModulesConfig);
+              } finally {
+                Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
+              }
+            }
+          }).get(BRIDGE_SETUP_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+    } catch (Exception t) {
+      throw new RuntimeException("Failed to initialize bridge", t);
     }
   }
 
-  private void initializeBridge(
+  private ReactBridge initializeBridge(
       JavaScriptExecutor jsExecutor,
       JavaScriptModulesConfig jsModulesConfig) {
     mCatalystQueueConfiguration.getJSQueueThread().assertIsOnThread();
     Assertions.assertCondition(mBridge == null, "initializeBridge should be called once");
 
-    mBridge = new ReactBridge(
-        jsExecutor,
-        new NativeModulesReactCallback(),
-        mCatalystQueueConfiguration.getNativeModulesQueueThread());
-    mBridge.setGlobalVariable(
-        "__fbBatchedBridgeConfig",
-        buildModulesConfigJSONProperty(mJavaRegistry, jsModulesConfig));
-    Systrace.registerListener(mTraceListener);
+    Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, "ReactBridgeCtor");
+    ReactBridge bridge;
+    try {
+      bridge = new ReactBridge(
+          jsExecutor,
+          new NativeModulesReactCallback(),
+          mCatalystQueueConfiguration.getNativeModulesQueueThread());
+    } finally {
+      Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
+    }
+
+    Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, "setBatchedBridgeConfig");
+    try {
+      bridge.setGlobalVariable(
+          "__fbBatchedBridgeConfig",
+          buildModulesConfigJSONProperty(mJavaRegistry, jsModulesConfig));
+      bridge.setGlobalVariable(
+          "__RCTProfileIsProfiling",
+          Systrace.isTracing(Systrace.TRACE_TAG_REACT_APPS) ? "true" : "false");
+    } finally {
+      Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
+    }
+
+    return bridge;
   }
 
   @Override
   public void runJSBundle() {
-    Systrace.beginSection(
-        Systrace.TRACE_TAG_REACT_JAVA_BRIDGE,
-        "CatalystInstance_runJSBundle");
-
     try {
-      final CountDownLatch initLatch = new CountDownLatch(1);
-      mCatalystQueueConfiguration.getJSQueueThread().runOnQueue(
-          new Runnable() {
+      mJSBundleHasLoaded = mCatalystQueueConfiguration.getJSQueueThread().callOnQueue(
+          new Callable<Boolean>() {
             @Override
-            public void run() {
+            public Boolean call() throws Exception {
               Assertions.assertCondition(!mJSBundleHasLoaded, "JS bundle was already loaded!");
-              mJSBundleHasLoaded = true;
 
               incrementPendingJSCalls();
 
+              Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, "loadJSScript");
               try {
                 mJSBundleLoader.loadScript(mBridge);
+
+                // This is registered after JS starts since it makes a JS call
+                Systrace.registerListener(mTraceListener);
               } catch (JSExecutionException e) {
                 mNativeModuleCallExceptionHandler.handleException(e);
+              } finally {
+                Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
               }
 
-              initLatch.countDown();
+              return true;
             }
-          });
-      Assertions.assertCondition(
-          initLatch.await(LOAD_JS_BUNDLE_TIMEOUT_MS, TimeUnit.MILLISECONDS),
-          "Timed out loading JS!");
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    } finally {
-      Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
+          }).get(LOAD_JS_BUNDLE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+    } catch (Exception t) {
+      throw new RuntimeException(t);
     }
   }
 
@@ -166,11 +177,22 @@ public class CatalystInstanceImpl implements CatalystInstance {
 
     incrementPendingJSCalls();
 
+    final int traceID = mTraceID++;
+    Systrace.startAsyncFlow(
+        Systrace.TRACE_TAG_REACT_JAVA_BRIDGE,
+        tracingName,
+        traceID);
+
     mCatalystQueueConfiguration.getJSQueueThread().runOnQueue(
         new Runnable() {
           @Override
           public void run() {
             mCatalystQueueConfiguration.getJSQueueThread().assertIsOnThread();
+
+            Systrace.endAsyncFlow(
+                Systrace.TRACE_TAG_REACT_JAVA_BRIDGE,
+                tracingName,
+                traceID);
 
             if (mDestroyed) {
               return;
@@ -198,11 +220,22 @@ public class CatalystInstanceImpl implements CatalystInstance {
 
     incrementPendingJSCalls();
 
+    final int traceID = mTraceID++;
+    Systrace.startAsyncFlow(
+        Systrace.TRACE_TAG_REACT_JAVA_BRIDGE,
+        "<callback>",
+        traceID);
+
     mCatalystQueueConfiguration.getJSQueueThread().runOnQueue(
         new Runnable() {
           @Override
           public void run() {
             mCatalystQueueConfiguration.getJSQueueThread().assertIsOnThread();
+
+            Systrace.endAsyncFlow(
+                Systrace.TRACE_TAG_REACT_JAVA_BRIDGE,
+                "<callback>",
+                traceID);
 
             if (mDestroyed) {
               return;
@@ -242,13 +275,11 @@ public class CatalystInstanceImpl implements CatalystInstance {
       }
     }
 
-    if (mBridge != null) {
-      Systrace.unregisterListener(mTraceListener);
-    }
+    Systrace.unregisterListener(mTraceListener);
 
     // We can access the Bridge from any thread now because we know either we are on the JS thread
     // or the JS thread has finished via CatalystQueueConfiguration#destroy()
-    Assertions.assertNotNull(mBridge).dispose();
+    mBridge.dispose();
   }
 
   @Override
@@ -276,8 +307,7 @@ public class CatalystInstanceImpl implements CatalystInstance {
   }
 
   @VisibleForTesting
-  public @Nullable
-  ReactBridge getBridge() {
+  public ReactBridge getBridge() {
     return mBridge;
   }
 
@@ -294,6 +324,11 @@ public class CatalystInstanceImpl implements CatalystInstance {
   @Override
   public Collection<NativeModule> getNativeModules() {
     return mJavaRegistry.getAllModules();
+  }
+
+  @Override
+  public void handleMemoryPressure(MemoryPressure level) {
+    Assertions.assertNotNull(mBridge).handleMemoryPressure(level);
   }
 
   /**
@@ -318,41 +353,31 @@ public class CatalystInstanceImpl implements CatalystInstance {
 
   @Override
   public boolean supportsProfiling() {
-    if (mBridge == null) {
-      return false;
-    }
     return mBridge.supportsProfiling();
   }
 
   @Override
   public void startProfiler(String title) {
-    if (mBridge == null) {
-      return;
-    }
     mBridge.startProfiler(title);
   }
 
   @Override
   public void stopProfiler(String title, String filename) {
-    if (mBridge == null) {
-      return;
-    }
     mBridge.stopProfiler(title, filename);
   }
 
   private String buildModulesConfigJSONProperty(
       NativeModuleRegistry nativeModuleRegistry,
       JavaScriptModulesConfig jsModulesConfig) {
-    // TODO(5300733): Serialize config using single json generator
     JsonFactory jsonFactory = new JsonFactory();
     StringWriter writer = new StringWriter();
     try {
       JsonGenerator jg = jsonFactory.createGenerator(writer);
       jg.writeStartObject();
       jg.writeFieldName("remoteModuleConfig");
-      jg.writeRawValue(nativeModuleRegistry.moduleDescriptions());
+      nativeModuleRegistry.writeModuleDescriptions(jg);
       jg.writeFieldName("localModulesConfig");
-      jg.writeRawValue(jsModulesConfig.moduleDescriptions());
+      jsModulesConfig.writeModuleDescriptions(jg);
       jg.writeEndObject();
       jg.close();
     } catch (IOException ioe) {
@@ -377,7 +402,8 @@ public class CatalystInstanceImpl implements CatalystInstance {
 
   private void decrementPendingJSCalls() {
     int newPendingCalls = mPendingJSCalls.decrementAndGet();
-    Assertions.assertCondition(newPendingCalls >= 0);
+    // TODO(9604406): handle case of web workers injecting messages to main thread
+    //Assertions.assertCondition(newPendingCalls >= 0);
     boolean isNowIdle = newPendingCalls == 0;
     Systrace.traceCounter(
         Systrace.TRACE_TAG_REACT_JAVA_BRIDGE,
@@ -447,12 +473,12 @@ public class CatalystInstanceImpl implements CatalystInstance {
   private class JSProfilerTraceListener implements TraceListener {
     @Override
     public void onTraceStarted() {
-      getJSModule(BridgeProfiling.class).setEnabled(true);
+      getJSModule(com.facebook.react.bridge.Systrace.class).setEnabled(true);
     }
 
     @Override
     public void onTraceStopped() {
-      getJSModule(BridgeProfiling.class).setEnabled(false);
+      getJSModule(com.facebook.react.bridge.Systrace.class).setEnabled(false);
     }
   }
 
