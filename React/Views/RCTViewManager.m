@@ -10,6 +10,7 @@
 #import "RCTViewManager.h"
 
 #import "RCTBridge.h"
+#import "RCTBorderStyle.h"
 #import "RCTConvert.h"
 #import "RCTEventDispatcher.h"
 #import "RCTLog.h"
@@ -54,11 +55,6 @@ RCT_EXPORT_MODULE()
   return _bridge.uiManager.methodQueue;
 }
 
-- (UIView *)viewWithProps:(__unused NSDictionary<NSString *, id> *)props
-{
-  return [self view];
-}
-
 - (UIView *)view
 {
   return [RCTView new];
@@ -93,11 +89,6 @@ RCT_EXPORT_MODULE()
 - (NSArray<NSString *> *)customDirectEventTypes
 {
   return @[];
-}
-
-- (NSDictionary<NSString *, id> *)constantsToExport
-{
-  return nil;
 }
 
 - (RCTViewManagerUIBlock)uiBlockToAmendWithShadowView:(__unused RCTShadowView *)shadowView
@@ -189,6 +180,12 @@ RCT_CUSTOM_VIEW_PROPERTY(borderWidth, CGFloat, RCTView)
     view.borderWidth = json ? [RCTConvert CGFloat:json] : defaultView.borderWidth;
   } else {
     view.layer.borderWidth = json ? [RCTConvert CGFloat:json] : defaultView.layer.borderWidth;
+  }
+}
+RCT_CUSTOM_VIEW_PROPERTY(borderStyle, RCTBorderStyle, RCTView)
+{
+  if ([view respondsToSelector:@selector(setBorderStyle:)]) {
+    view.borderStyle = json ? [RCTConvert RCTBorderStyle:json] : defaultView.borderStyle;
   }
 }
 RCT_EXPORT_VIEW_PROPERTY(onAccessibilityTap, RCTDirectEventBlock)

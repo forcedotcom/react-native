@@ -125,6 +125,27 @@ class RewriteExample extends React.Component {
   }
 }
 
+class RewriteExampleInvalidCharacters extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {text: ''};
+  }
+  render() {
+    return (
+      <View style={styles.rewriteContainer}>
+        <TextInput
+          multiline={false}
+          onChangeText={(text) => {
+            this.setState({text: text.replace(/\s/g, '')});
+          }}
+          style={styles.default}
+          value={this.state.text}
+        />
+      </View>
+    );
+  }
+}
+
 class TokenizedTextExample extends React.Component {
   constructor(props) {
     super(props);
@@ -158,7 +179,7 @@ class TokenizedTextExample extends React.Component {
     //highlight hashtags
     parts = parts.map((text) => {
       if (/^#/.test(text)) {
-        return <Text style={styles.hashtag}>{text}</Text>;
+        return <Text key={text} style={styles.hashtag}>{text}</Text>;
       } else {
         return text;
       }
@@ -181,52 +202,52 @@ class TokenizedTextExample extends React.Component {
 
 var BlurOnSubmitExample = React.createClass({
   focusNextField(nextField) {
-    this.refs[nextField].focus()
+    this.refs[nextField].focus();
   },
 
   render: function() {
     return (
       <View>
         <TextInput
-          ref='1'
+          ref="1"
           style={styles.default}
-          placeholder='blurOnSubmit = false'
-          returnKeyType='next'
+          placeholder="blurOnSubmit = false"
+          returnKeyType="next"
           blurOnSubmit={false}
           onSubmitEditing={() => this.focusNextField('2')}
         />
         <TextInput
-          ref='2'
+          ref="2"
           style={styles.default}
-          keyboardType='email-address'
-          placeholder='blurOnSubmit = false'
-          returnKeyType='next'
+          keyboardType="email-address"
+          placeholder="blurOnSubmit = false"
+          returnKeyType="next"
           blurOnSubmit={false}
           onSubmitEditing={() => this.focusNextField('3')}
         />
         <TextInput
-          ref='3'
+          ref="3"
           style={styles.default}
-          keyboardType='url'
-          placeholder='blurOnSubmit = false'
-          returnKeyType='next'
+          keyboardType="url"
+          placeholder="blurOnSubmit = false"
+          returnKeyType="next"
           blurOnSubmit={false}
           onSubmitEditing={() => this.focusNextField('4')}
         />
         <TextInput
-          ref='4'
+          ref="4"
           style={styles.default}
-          keyboardType='numeric'
-          placeholder='blurOnSubmit = false'
+          keyboardType="numeric"
+          placeholder="blurOnSubmit = false"
           blurOnSubmit={false}
           onSubmitEditing={() => this.focusNextField('5')}
         />
         <TextInput
-          ref='5'
+          ref="5"
           style={styles.default}
-          keyboardType='numbers-and-punctuation'
-          placeholder='blurOnSubmit = true'
-          returnKeyType='done'
+          keyboardType="numbers-and-punctuation"
+          placeholder="blurOnSubmit = true"
+          returnKeyType="done"
         />
       </View>
     );
@@ -311,6 +332,12 @@ exports.examples = [
     title: "Live Re-Write (<sp>  ->  '_') + maxLength",
     render: function() {
       return <RewriteExample />;
+    }
+  },
+  {
+    title: 'Live Re-Write (no spaces allowed)',
+    render: function() {
+      return <RewriteExampleInvalidCharacters />;
     }
   },
   {
@@ -545,6 +572,27 @@ exports.examples = [
     }
   },
   {
+    title: 'Blur on submit',
+    render: function(): ReactElement { return <BlurOnSubmitExample />; },
+  },
+  {
+    title: 'Multiline blur on submit',
+    render: function() {
+      return (
+        <View>
+          <TextInput
+            style={styles.multiline}
+            placeholder="blurOnSubmit = true"
+            returnKeyType="next"
+            blurOnSubmit={true}
+            multiline={true}
+            onSubmitEditing={event => alert(event.nativeEvent.text)}
+          />
+        </View>
+      );
+    }
+  },
+  {
     title: 'Multiline',
     render: function() {
       return (
@@ -587,9 +635,5 @@ exports.examples = [
     render: function() {
       return <TokenizedTextExample />;
     }
-  },
-  {
-    title: 'Blur on submit',
-    render: function(): ReactElement { return <BlurOnSubmitExample />; },
   },
 ];

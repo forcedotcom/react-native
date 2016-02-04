@@ -15,13 +15,16 @@ useGracefulFs();
 var debug = require('debug');
 var omit = require('underscore').omit;
 var Activity = require('./src/Activity');
+var Transforms = require('./src/transforms');
 
+exports.createServer = createServer;
 exports.middleware = function(options) {
   var server = createServer(options);
   return server.processRequest.bind(server);
 };
 
 exports.Activity = Activity;
+exports.getTransforms = Transforms.getAll;
 
 // Renamed "package" to "bundle". But maintain backwards
 // compat.

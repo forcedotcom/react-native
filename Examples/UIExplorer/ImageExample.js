@@ -28,9 +28,46 @@ var base64Icon = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEsAAABLCAQAAACS
 
 var ImageCapInsetsExample = require('./ImageCapInsetsExample');
 
-var NetworkImageExample = React.createClass({
-  watchID: (null: ?number),
+var NetworkImageCallbackExample = React.createClass({
+  getInitialState: function() {
+    return {
+      events: [],
+      mountTime: new Date(),
+    };
+  },
 
+  componentWillMount() {
+    this.setState({mountTime: new Date()});
+  },
+
+  render: function() {
+    var { mountTime } = this.state;
+
+    return (
+      <View>
+        <Image
+          source={this.props.source}
+          style={[styles.base, {overflow: 'visible'}]}
+          onLoadStart={() => this._loadEventFired(`✔ onLoadStart (+${new Date() - mountTime}ms)`)}
+          onLoad={() => this._loadEventFired(`✔ onLoad (+${new Date() - mountTime}ms)`)}
+          onLoadEnd={() => this._loadEventFired(`✔ onLoadEnd (+${new Date() - mountTime}ms)`)}
+        />
+
+        <Text style={{marginTop: 20}}>
+          {this.state.events.join('\n')}
+        </Text>
+      </View>
+    );
+  },
+
+  _loadEventFired(event) {
+    this.setState((state) => {
+      return state.events = [...state.events, event];
+    });
+  }
+});
+
+var NetworkImageExample = React.createClass({
   getInitialState: function() {
     return {
       error: false,
@@ -56,6 +93,38 @@ var NetworkImageExample = React.createClass({
         {loader}
       </Image>;
   }
+});
+
+var ImageSizeExample = React.createClass({
+  getInitialState: function() {
+    return {
+      width: 0,
+      height: 0,
+    };
+  },
+  componentDidMount: function() {
+    Image.getSize(this.props.source.uri, (width, height) => {
+      this.setState({width, height});
+    });
+  },
+  render: function() {
+    return (
+      <View style={{flexDirection: 'row'}}>
+        <Image
+          style={{
+            width: 60,
+            height: 60,
+            backgroundColor: 'transparent',
+            marginRight: 10,
+          }}
+          source={this.props.source} />
+        <Text>
+          Actual dimensions:{'\n'}
+          Width: {this.state.width}, Height: {this.state.height}
+        </Text>
+      </View>
+    );
+  },
 });
 
 exports.displayName = (undefined: ?string);
@@ -89,6 +158,14 @@ exports.examples = [
           <Image source={require('image!uie_comment_normal')} style={styles.icon} />
           <Image source={require('image!uie_comment_highlighted')} style={styles.icon} />
         </View>
+      );
+    },
+  },
+  {
+    title: 'Image Loading Events',
+    render: function() {
+      return (
+        <NetworkImageCallbackExample source={{uri: 'http://facebook.github.io/origami/public/images/blog-hero.jpg?r=1'}}/>
       );
     },
   },
@@ -358,6 +435,13 @@ exports.examples = [
       'resizable rounded buttons, shadows, and other resizable assets.',
     render: function() {
       return <ImageCapInsetsExample />;
+    },
+    platform: 'ios',
+  },
+  {
+    title: 'Image Size',
+    render: function() {
+      return <ImageSizeExample source={fullImage} />; 
     },
     platform: 'ios',
   },

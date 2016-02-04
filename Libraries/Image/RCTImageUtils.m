@@ -207,10 +207,10 @@ CGSize RCTSizeInPixels(CGSize pointSize, CGFloat scale)
   };
 }
 
-UIImage *RCTDecodeImageWithData(NSData *data,
-                                CGSize destSize,
-                                CGFloat destScale,
-                                UIViewContentMode resizeMode)
+UIImage *__nullable RCTDecodeImageWithData(NSData *data,
+                                           CGSize destSize,
+                                           CGFloat destScale,
+                                           UIViewContentMode resizeMode)
 {
   CGImageSourceRef sourceRef = CGImageSourceCreateWithData((__bridge CFDataRef)data, NULL);
   if (!sourceRef) {
@@ -218,7 +218,6 @@ UIImage *RCTDecodeImageWithData(NSData *data,
   }
 
   // get original image size
-  CGSize sourceSize;
   CFDictionaryRef imageProperties = CGImageSourceCopyPropertiesAtIndex(sourceRef, 0, NULL);
   if (!imageProperties) {
     CFRelease(sourceRef);
@@ -226,11 +225,16 @@ UIImage *RCTDecodeImageWithData(NSData *data,
   }
   NSNumber *width = CFDictionaryGetValue(imageProperties, kCGImagePropertyPixelWidth);
   NSNumber *height = CFDictionaryGetValue(imageProperties, kCGImagePropertyPixelHeight);
-  sourceSize = (CGSize){width.doubleValue, height.doubleValue};
+  CGSize sourceSize = {width.doubleValue, height.doubleValue};
   CFRelease(imageProperties);
 
   if (CGSizeEqualToSize(destSize, CGSizeZero)) {
     destSize = sourceSize;
+    if (!destScale) {
+      destScale = 1;
+    }
+  } else if (!destScale) {
+    destScale = RCTScreenScale();
   }
 
   // calculate target size
@@ -253,19 +257,26 @@ UIImage *RCTDecodeImageWithData(NSData *data,
     return nil;
   }
 
-  // adjust scale
-  size_t actualWidth = CGImageGetWidth(imageRef);
-  CGFloat scale = actualWidth / targetSize.width * destScale;
-
   // return image
   UIImage *image = [UIImage imageWithCGImage:imageRef
-                                       scale:scale
+                                       scale:destScale
                                  orientation:UIImageOrientationUp];
   CGImageRelease(imageRef);
   return image;
 }
 
-NSData *RCTGetImageData(CGImageRef image, float quality)
+NSDictionary<NSString *, id> *__nullable RCTGetImageMetadata(NSData *data)
+{
+  CGImageSourceRef sourceRef = CGImageSourceCreateWithData((__bridge CFDataRef)data, NULL);
+  if (!sourceRef) {
+    return nil;
+  }
+  CFDictionaryRef imageProperties = CGImageSourceCopyPropertiesAtIndex(sourceRef, 0, NULL);
+  CFRelease(sourceRef);
+  return (__bridge_transfer id)imageProperties;
+}
+
+NSData *__nullable RCTGetImageData(CGImageRef image, float quality)
 {
   NSDictionary *properties;
   CGImageDestinationRef destination;
