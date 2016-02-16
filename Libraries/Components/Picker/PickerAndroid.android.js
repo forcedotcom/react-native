@@ -120,11 +120,11 @@ var PickerAndroid = React.createClass({
 
 var styles = StyleSheet.create({
   pickerAndroid: {
-    // We have to set the picker's dimensions explicitly to ensure
-    // it gets rendered.
+    // The picker will conform to whatever width is given, but we do
+    // have to set the component's height explicitly on the
+    // surrounding view to ensure it gets rendered.
     // TODO would be better to export a native constant for this,
     // like in iOS the RCTDatePickerManager.m
-    width: 80,
     height: 50,
   },
 });

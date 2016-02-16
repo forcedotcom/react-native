@@ -43,10 +43,6 @@ var MODE_DROPDOWN = 'dropdown';
  *       <Picker.Item label="Java" value="java" />
  *       <Picker.Item label="JavaScript" value="js" />
  *     </Picker>
- *
- * Note: The picker has a default fixed height which you can modify
- * using `style` if needed. To set the width, you can use `style`
- * as well, e.g. to set a fixed width or stretch the picker horizontally.
  */
 var Picker = React.createClass({
 
@@ -88,12 +84,13 @@ var Picker = React.createClass({
     enabled: React.PropTypes.bool,
     /**
      * On Android, specifies how to display the selection items when the user taps on the picker:
+     *
      *   - 'dialog': Show a modal dialog. This is the default.
      *   - 'dropdown': Shows a dropdown anchored to the picker view
      *
      * @platform android
      */
-    mode: React.PropTypes.oneOf([MODE_DIALOG, MODE_DROPDOWN]),
+    mode: React.PropTypes.oneOf(['dialog', 'dropdown']),
     /**
      * Style to apply to each of the item labels.
      * @platform ios
