@@ -8,8 +8,6 @@
 
 #define throwJSExecutionException(...) jni::throwNewJavaException("com/facebook/react/bridge/JSExecutionException", __VA_ARGS__)
 
-#define throwJSExecutionException(...) jni::throwNewJavaException("com/facebook/react/bridge/JSExecutionException", __VA_ARGS__)
-
 namespace facebook {
 namespace react {
 
@@ -22,6 +20,6 @@ JSValueRef makeJSCException(
     JSContextRef ctx,
     const char* exception_text);
 
-JSValueRef evaluateScript(JSContextRef context, JSStringRef script, JSStringRef source);
+JSValueRef evaluateScript(JSContextRef context, JSStringRef script, JSStringRef source, const char *cachePath = nullptr);
 
 } }

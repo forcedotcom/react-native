@@ -72,6 +72,29 @@ var TextEventsExample = React.createClass({
   }
 });
 
+class AutoExpandingTextInput extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {text: '', height: 0};
+  }
+  render() {
+    return (
+      <TextInput
+        {...this.props}
+        multiline={true}
+        onChange={(event) => {
+          this.setState({
+            text: event.nativeEvent.text,
+            height: event.nativeEvent.contentSize.height,
+          });
+        }}
+        style={[styles.default, {height: Math.max(35, this.state.height)}]}
+        value={this.state.text}
+      />
+    );
+  }
+}
+
 class RewriteExample extends React.Component {
   constructor(props) {
     super(props);
@@ -185,7 +208,13 @@ exports.examples = [
   {
     title: 'Auto-focus',
     render: function() {
-      return <TextInput autoFocus={true} style={styles.singleLine} />;
+      return (
+        <TextInput
+          autoFocus={true}
+          style={styles.singleLine}
+          accessibilityLabel="I am the accessibility label for text input"
+        />
+      );
     }
   },
   {
@@ -299,6 +328,11 @@ exports.examples = [
               Darker backgroundColor
             </Text>
           </TextInput>
+          <TextInput
+            defaultValue="Highlight Color is red"
+            selectionColor={'red'}
+            style={styles.singleLine}>
+          </TextInput>
         </View>
       );
     }
@@ -380,6 +414,20 @@ exports.examples = [
           <TextInput numberOfLines={5}
             multiline={true}
             placeholder="Five line input"
+          />
+        </View>
+      );
+    }
+  },
+  {
+    title: 'Auto-expanding',
+    render: function() {
+      return (
+        <View>
+          <AutoExpandingTextInput
+            placeholder="height increases with content"
+            enablesReturnKeyAutomatically={true}
+            returnKeyType="done"
           />
         </View>
       );

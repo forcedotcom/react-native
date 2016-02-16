@@ -10,7 +10,7 @@ Future releases:
 - 0.18.0 - Jan 18
 - **0.19 branch cut**, 0.19.0-rc - **week of Jan 18**
 - 0.19.0 - Feb 1
-- **0.20 branch cut**, 0.19.0-rc - **week of Feb 1**
+- **0.20 branch cut**, 0.20.0-rc - **week of Feb 1**
 - 0.20.0 - Feb 15
 - ...
 
@@ -29,16 +29,25 @@ Run:
 
 #### Check that everything works
 
-Make absolutely sure basic iOS and Android workflow works on master, see the instructions printed by `release.sh`.
+Make absolutely sure a basic iOS and Android workflow works on the release branch you've just created, see the instructions printed by `release.sh`.
   
 #### Push to github
 
   - Check git history, the last commit should be "[0.19-rc] Bump version numbers" (with the correct version)
   - `git push origin 0.version_you_are_releasing-stable`
+  
+## Make sure we have release notes
+
+Post that we're ready to release so voluteers can write release notes:
+https://github.com/facebook/react-native/releases
+
+To go through all the commits that went into a release, one way is to use the github compare view: https://github.com/facebook/react-native/compare/0.18-stable...0.19-stable
 
 ## Do a release
 
 Skip this for now, ping @mkonicek on messenger and he'll handle it. Docs [here](https://github.com/facebook/react-native/blob/master/Releases-publish.md).
+
+IMPORTANT:  `npm publish` will automatically set the latest tag. **When doing an RC release**, run `npm publish --tag next` - this way people need to opt in to get the RC release.
 
 ## Track bug reports from the community during the following two weeks and make sure they get fixed
 

@@ -16,26 +16,27 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.drawable.Animatable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.SystemClock;
 
 import com.facebook.common.util.UriUtil;
 import com.facebook.drawee.controller.AbstractDraweeControllerBuilder;
-import com.facebook.drawee.drawable.AutoRotateDrawable;
 import com.facebook.drawee.controller.BaseControllerListener;
 import com.facebook.drawee.controller.ControllerListener;
 import com.facebook.drawee.controller.ForwardingControllerListener;
+import com.facebook.drawee.drawable.AutoRotateDrawable;
 import com.facebook.drawee.drawable.ScalingUtils;
 import com.facebook.drawee.generic.GenericDraweeHierarchy;
 import com.facebook.drawee.generic.GenericDraweeHierarchyBuilder;
 import com.facebook.drawee.generic.RoundingParams;
-import com.facebook.drawee.interfaces.DraweeController;
 import com.facebook.drawee.view.GenericDraweeView;
 import com.facebook.imagepipeline.common.ResizeOptions;
 import com.facebook.imagepipeline.image.ImageInfo;
@@ -54,7 +55,7 @@ import com.facebook.react.uimanager.events.EventDispatcher;
  */
 public class ReactImageView extends GenericDraweeView {
 
-  private static final int REMOTE_IMAGE_FADE_DURATION_MS = 300;
+  public static final int REMOTE_IMAGE_FADE_DURATION_MS = 300;
 
   /*
    * Implementation note re rounded corners:
@@ -108,6 +109,7 @@ public class ReactImageView extends GenericDraweeView {
   private @Nullable Uri mUri;
   private @Nullable Drawable mLoadingImageDrawable;
   private int mBorderColor;
+  private int mOverlayColor;
   private float mBorderWidth;
   private float mBorderRadius;
   private ScalingUtils.ScaleType mScaleType;
@@ -183,6 +185,11 @@ public class ReactImageView extends GenericDraweeView {
 
   public void setBorderColor(int borderColor) {
     mBorderColor = borderColor;
+    mIsDirty = true;
+  }
+
+  public void setOverlayColor(int overlayColor) {
+    mOverlayColor = overlayColor;
     mIsDirty = true;
   }
 
@@ -266,6 +273,12 @@ public class ReactImageView extends GenericDraweeView {
     RoundingParams roundingParams = hierarchy.getRoundingParams();
     roundingParams.setCornersRadius(hierarchyRadius);
     roundingParams.setBorder(mBorderColor, mBorderWidth);
+    if (mOverlayColor != Color.TRANSPARENT) {
+        roundingParams.setOverlayColor(mOverlayColor);
+    } else {
+        // make sure the default rounding method is used.
+        roundingParams.setRoundingMethod(RoundingParams.RoundingMethod.BITMAP_ONLY);
+    }
     hierarchy.setRoundingParams(roundingParams);
     hierarchy.setFadeDuration(
         mFadeDurationMs >= 0
