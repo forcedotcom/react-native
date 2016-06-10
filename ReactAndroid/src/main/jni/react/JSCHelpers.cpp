@@ -3,13 +3,12 @@
 #include "JSCHelpers.h"
 
 #include <JavaScriptCore/JSStringRef.h>
-#include <fb/log.h>
-#include <jni/fbjni/Exceptions.h>
+#include <glog/logging.h>
 
 #include "Value.h"
 
 #if WITH_FBJSCEXTENSIONS
-#include <jsc_function_info_cache.h>
+#include <jsc_preparsing_cache.h>
 #endif
 
 namespace facebook {
@@ -36,27 +35,17 @@ JSValueRef makeJSCException(
   return JSValueToObject(ctx, exceptionString, NULL);
 }
 
-JSValueRef evaluateScript(JSContextRef context, JSStringRef script, JSStringRef source, const char *cachePath) {
+JSValueRef evaluateScript(JSContextRef context, JSStringRef script, JSStringRef source) {
   JSValueRef exn, result;
-#if WITH_FBJSCEXTENSIONS
-  if (source){
-    // If evaluating an application script, send it through `JSEvaluateScriptWithCache()`
-    //  to add cache support.
-    result = JSEvaluateScriptWithCache(context, script, NULL, source, 0, &exn, cachePath);
-  } else {
-    result = JSEvaluateScript(context, script, NULL, source, 0, &exn);
-  }
-#else
   result = JSEvaluateScript(context, script, NULL, source, 0, &exn);
-#endif
   if (result == nullptr) {
     Value exception = Value(context, exn);
     std::string exceptionText = exception.toString().str();
-    FBLOGE("Got JS Exception: %s", exceptionText.c_str());
+    LOG(ERROR) << "Got JS Exception: " << exceptionText;
     auto line = exception.asObject().getProperty("line");
 
     std::ostringstream locationInfo;
-    std::string file = source != nullptr ? String::adopt(source).str() : "";
+    std::string file = source != nullptr ? String::ref(source).str() : "";
     locationInfo << "(" << (file.length() ? file : "<unknown file>");
     if (line != nullptr && line.isNumber()) {
       locationInfo << ":" << line.asInteger();

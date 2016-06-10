@@ -39,18 +39,19 @@ RCTRootView *rootView = [[RCTRootView alloc] initWithBridge:bridge
 ```
 'use strict';
 
-var React = require('react-native');
-  var {
+import React from 'react';
+import {
+  AppRegistry,
   View,
   Image
-} = React;
+} from 'react-native';
 
 class ImageBrowserApp extends React.Component {
-  renderImage: function(imgURI) {
+  renderImage(imgURI) {
     return (
       <Image source={{uri: imgURI}} />
     );
-  },
+  }
   render() {
     return (
       <View>
@@ -60,7 +61,7 @@ class ImageBrowserApp extends React.Component {
   }
 }
 
-React.AppRegistry.registerComponent('ImageBrowserApp', () => ImageBrowserApp);
+AppRegistry.registerComponent('ImageBrowserApp', () => ImageBrowserApp);
 ```
 
 `RCTRootView` also provides a read-write property `appProperties`. After `appProperties` is set, the React Native app is re-rendered with new properties. The update is only performed when the new updated properties differ from the previous ones.
@@ -100,8 +101,8 @@ Events are described in detail in [this article](docs/native-components-ios.html
 
 Events are powerful, because they allow us to change React Native components without needing a reference to them. However, there are some pitfalls that you can fall into while using them:
 
-* As events can be sent from anywhere, they can introduce spaghetti-style dependencies into your project. 
-* Events share namespace, which means that you may encounter some name collisions. Collisions will not be detected statically, what makes them hard to debug. 
+* As events can be sent from anywhere, they can introduce spaghetti-style dependencies into your project.
+* Events share namespace, which means that you may encounter some name collisions. Collisions will not be detected statically, what makes them hard to debug.
 * If you use several instances of the same React Native component and you want to distinguish them from the perspective of your event, you'll likely need to introduce some kind of identifiers and pass them along with events (you can use the native view's `reactTag` as an identifier).
 
 The common pattern we use when embedding native in React Native is to make the native component's RCTViewManager a delegate for the views, sending events back to JavaScript via the bridge. This keeps related event calls in one place.

@@ -19,9 +19,10 @@ import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.CatalystInstance;
 import com.facebook.react.bridge.ReactTestHelper;
-import com.facebook.react.bridge.SimpleArray;
-import com.facebook.react.bridge.SimpleMap;
+import com.facebook.react.bridge.JavaOnlyArray;
+import com.facebook.react.bridge.JavaOnlyMap;
 import com.facebook.react.bridge.WritableArray;
+import com.facebook.react.common.SystemClock;
 import com.facebook.react.uimanager.UIManagerModule;
 import com.facebook.react.uimanager.DisplayMetricsHolder;
 import com.facebook.react.uimanager.events.Event;
@@ -51,7 +52,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-@PrepareForTest(Arguments.class)
+@PrepareForTest({Arguments.class, SystemClock.class})
 @RunWith(RobolectricTestRunner.class)
 @PowerMockIgnore({"org.mockito.*", "org.robolectric.*", "android.*"})
 public class RootViewTest {
@@ -64,25 +65,32 @@ public class RootViewTest {
 
   @Before
   public void setUp() {
+    final long ts = SystemClock.nanoTime();
     PowerMockito.mockStatic(Arguments.class);
     PowerMockito.when(Arguments.createArray()).thenAnswer(new Answer<Object>() {
       @Override
       public Object answer(InvocationOnMock invocation) throws Throwable {
-        return new SimpleArray();
+        return new JavaOnlyArray();
       }
     });
     PowerMockito.when(Arguments.createMap()).thenAnswer(new Answer<Object>() {
       @Override
       public Object answer(InvocationOnMock invocation) throws Throwable {
-        return new SimpleMap();
+        return new JavaOnlyMap();
+      }
+    });
+    PowerMockito.mockStatic(SystemClock.class);
+    PowerMockito.when(SystemClock.nanoTime()).thenAnswer(new Answer<Object>() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        return ts;
       }
     });
 
     mCatalystInstanceMock = ReactTestHelper.createMockCatalystInstance();
     mReactContext = new ReactApplicationContext(RuntimeEnvironment.application);
     mReactContext.initializeWithInstance(mCatalystInstanceMock);
-    DisplayMetrics displayMetrics = mReactContext.getResources().getDisplayMetrics();
-    DisplayMetricsHolder.setWindowDisplayMetrics(displayMetrics);
+    DisplayMetricsHolder.initDisplayMetricsIfNotInitialized(mReactContext);
 
     UIManagerModule uiManagerModuleMock = mock(UIManagerModule.class);
     when(mCatalystInstanceMock.getNativeModule(UIManagerModule.class))
@@ -108,7 +116,7 @@ public class RootViewTest {
     rootView.startReactApplication(instanceManager, "");
     rootView.simulateAttachForTesting();
 
-    long ts = new Date().getTime();
+    long ts = SystemClock.nanoTime();
 
     // Test ACTION_DOWN event
     rootView.onTouchEvent(
@@ -120,17 +128,17 @@ public class RootViewTest {
 
     downEventCaptor.getValue().dispatch(eventEmitterModuleMock);
 
-    ArgumentCaptor<SimpleArray> downActionTouchesArgCaptor =
-        ArgumentCaptor.forClass(SimpleArray.class);
+    ArgumentCaptor<JavaOnlyArray> downActionTouchesArgCaptor =
+        ArgumentCaptor.forClass(JavaOnlyArray.class);
     verify(eventEmitterModuleMock).receiveTouches(
         eq("topTouchStart"),
         downActionTouchesArgCaptor.capture(),
-        any(SimpleArray.class));
+        any(JavaOnlyArray.class));
     verifyNoMoreInteractions(eventEmitterModuleMock);
 
     assertThat(downActionTouchesArgCaptor.getValue().size()).isEqualTo(1);
     assertThat(downActionTouchesArgCaptor.getValue().getMap(0)).isEqualTo(
-        SimpleMap.of(
+        JavaOnlyMap.of(
             "pageX",
             0.,
             "pageY",
@@ -150,8 +158,8 @@ public class RootViewTest {
     reset(eventEmitterModuleMock, eventDispatcher);
 
     ArgumentCaptor<Event> upEventCaptor = ArgumentCaptor.forClass(Event.class);
-    ArgumentCaptor<SimpleArray> upActionTouchesArgCaptor =
-        ArgumentCaptor.forClass(SimpleArray.class);
+    ArgumentCaptor<JavaOnlyArray> upActionTouchesArgCaptor =
+        ArgumentCaptor.forClass(JavaOnlyArray.class);
 
     rootView.onTouchEvent(
         MotionEvent.obtain(50, ts, MotionEvent.ACTION_UP, 0, 0, 0));
@@ -167,7 +175,7 @@ public class RootViewTest {
 
     assertThat(upActionTouchesArgCaptor.getValue().size()).isEqualTo(1);
     assertThat(upActionTouchesArgCaptor.getValue().getMap(0)).isEqualTo(
-        SimpleMap.of(
+        JavaOnlyMap.of(
             "pageX",
             0.,
             "pageY",
