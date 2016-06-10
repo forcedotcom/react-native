@@ -15,13 +15,14 @@
  */
 'use strict';
 
-var React = require('react-native');
+var React = require('react');
+var ReactNative = require('react-native');
 var {
   Text,
   TextInput,
   View,
   StyleSheet,
-} = React;
+} = ReactNative;
 
 var WithLabel = React.createClass({
   render: function() {
@@ -97,6 +98,8 @@ var TextEventsExample = React.createClass({
 });
 
 class AutoExpandingTextInput extends React.Component {
+  state: any;
+
   constructor(props) {
     super(props);
     this.state = {text: '', height: 0};
@@ -120,6 +123,8 @@ class AutoExpandingTextInput extends React.Component {
 }
 
 class RewriteExample extends React.Component {
+  state: any;
+
   constructor(props) {
     super(props);
     this.state = {text: ''};
@@ -149,6 +154,8 @@ class RewriteExample extends React.Component {
 }
 
 class RewriteExampleInvalidCharacters extends React.Component {
+  state: any;
+
   constructor(props) {
     super(props);
     this.state = {text: ''};
@@ -170,6 +177,8 @@ class RewriteExampleInvalidCharacters extends React.Component {
 }
 
 class TokenizedTextExample extends React.Component {
+  state: any;
+
   constructor(props) {
     super(props);
     this.state = {text: 'Hello #World'};
@@ -686,7 +695,7 @@ exports.examples = [
           <AutoExpandingTextInput
             placeholder="height increases with content"
             enablesReturnKeyAutomatically={true}
-            returnKeyType="done"
+            returnKeyType="default"
           />
         </View>
       );

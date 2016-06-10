@@ -27,6 +27,7 @@ public abstract class ReactActivity extends Activity implements DefaultHardwareB
       "Overlay permissions needs to be granted in order for react native apps to run in dev mode";
 
   private @Nullable ReactInstanceManager mReactInstanceManager;
+  private @Nullable ReactRootView mReactRootView;
   private LifecycleState mLifecycleState = LifecycleState.BEFORE_RESUME;
   private boolean mDoRefresh = false;
 
@@ -138,7 +139,7 @@ public abstract class ReactActivity extends Activity implements DefaultHardwareB
     }
 
     mReactInstanceManager = createReactInstanceManager();
-    ReactRootView mReactRootView = createRootView();
+    mReactRootView = createRootView();
     mReactRootView.startReactApplication(mReactInstanceManager, getMainComponentName(), getLaunchOptions());
     setContentView(mReactRootView);
   }
@@ -150,7 +151,7 @@ public abstract class ReactActivity extends Activity implements DefaultHardwareB
     mLifecycleState = LifecycleState.BEFORE_RESUME;
 
     if (mReactInstanceManager != null) {
-      mReactInstanceManager.onPause();
+      mReactInstanceManager.onHostPause();
     }
   }
 
@@ -161,7 +162,7 @@ public abstract class ReactActivity extends Activity implements DefaultHardwareB
     mLifecycleState = LifecycleState.RESUMED;
 
     if (mReactInstanceManager != null) {
-      mReactInstanceManager.onResume(this, this);
+      mReactInstanceManager.onHostResume(this, this);
     }
   }
 
@@ -169,8 +170,11 @@ public abstract class ReactActivity extends Activity implements DefaultHardwareB
   protected void onDestroy() {
     super.onDestroy();
 
+    mReactRootView.unmountReactApplication();
+    mReactRootView = null;
+
     if (mReactInstanceManager != null) {
-      mReactInstanceManager.onDestroy();
+      mReactInstanceManager.destroy();
     }
   }
 

@@ -7,6 +7,10 @@
   document.addEventListener('DOMContentLoaded', init);
 
   function init() {
+    if (isMobile()) {
+      document.querySelector('.nav-site-wrapper a[data-target]').addEventListener('click', toggleTarget);
+    }
+
     var backdrop = document.querySelector('.modal-backdrop');
     if (!backdrop) return;
 
@@ -42,11 +46,27 @@
     modal.classList.remove('modal-open');
   }
 
-  // Algolia
-  docsearch({
-    apiKey: 'e3d767b736584dbe6d4c35f7cf7d4633',
-    indexName: 'react-native',
-    inputSelector: '#algolia-doc-search'
-  });
+  var toggledTarget;
+  function toggleTarget(event) {
+    var target = document.body.querySelector(event.target.getAttribute('data-target'));
+
+    if (target) {
+      event.preventDefault();
+
+      if (toggledTarget === target) {
+        toggledTarget.classList.toggle('in');
+      } else {
+        toggledTarget && toggledTarget.classList.remove('in');
+        target.classList.add('in');
+      }
+
+      toggledTarget = target;
+    }
+  }
+
+  // Primitive mobile detection
+  function isMobile() {
+    return ( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) );
+  }
 
 }());

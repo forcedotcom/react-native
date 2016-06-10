@@ -13,7 +13,10 @@ import javax.annotation.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -40,7 +43,6 @@ import com.facebook.react.R;
 import com.facebook.react.bridge.CatalystInstance;
 import com.facebook.react.bridge.DefaultNativeModuleCallExceptionHandler;
 import com.facebook.react.bridge.JavaJSExecutor;
-import com.facebook.react.bridge.NativeModuleCallExceptionHandler;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.UiThreadUtil;
@@ -138,7 +140,7 @@ public class DevSupportManagerImpl implements DevSupportManager {
         if (DevServerHelper.getReloadAppAction(context).equals(action)) {
           if (intent.getBooleanExtra(DevServerHelper.RELOAD_APP_EXTRA_JS_PROXY, false)) {
             mIsUsingJSProxy = true;
-            mDevServerHelper.launchChromeDevtools();
+            mDevServerHelper.launchJSDevtools();
           } else {
             mIsUsingJSProxy = false;
           }
@@ -216,6 +218,14 @@ public class DevSupportManagerImpl implements DevSupportManager {
         });
   }
 
+  @Override
+  public void hideRedboxDialog() {
+    // dismiss redbox if exists
+    if (mRedBoxDialog != null) {
+      mRedBoxDialog.dismiss();
+    }
+  }
+
   private void showNewError(
       final String message,
       final StackFrame[] stack,
@@ -276,14 +286,31 @@ public class DevSupportManagerImpl implements DevSupportManager {
           }
         });
     options.put(
-        mDevSettings.isElementInspectorEnabled()
-          ? mApplicationContext.getString(R.string.catalyst_element_inspector_off)
-          : mApplicationContext.getString(R.string.catalyst_element_inspector),
+        mApplicationContext.getString(R.string.catalyst_element_inspector),
         new DevOptionHandler() {
           @Override
           public void onOptionSelected() {
             mDevSettings.setElementInspectorEnabled(!mDevSettings.isElementInspectorEnabled());
             mReactInstanceCommandsHandler.toggleElementInspector();
+          }
+        });
+    options.put(
+        mApplicationContext.getString(R.string.catalyst_heap_capture),
+        new DevOptionHandler() {
+          @Override
+          public void onOptionSelected() {
+            try {
+              String heapDumpPath = mApplicationContext.getCacheDir().getPath();
+              List<String> captureFiles = JSCHeapCapture.captureHeap(heapDumpPath, 60000);
+              for (String captureFile : captureFiles) {
+                Toast.makeText(
+                  mCurrentContext,
+                  "Heap captured to " + captureFile,
+                  Toast.LENGTH_LONG).show();
+              }
+            } catch (JSCHeapCapture.CaptureException e) {
+              showNewJavaError(e.getMessage(), e);
+            }
           }
         });
     options.put(
@@ -511,6 +538,18 @@ public class DevSupportManagerImpl implements DevSupportManager {
       mDebugOverlayController = new DebugOverlayController(reactContext);
     }
 
+    if (mDevSettings.isHotModuleReplacementEnabled() && mCurrentContext != null) {
+      try {
+        URL sourceUrl = new URL(getSourceUrl());
+        String path = sourceUrl.getPath().substring(1); // strip initial slash in path
+        String host = sourceUrl.getHost();
+        int port = sourceUrl.getPort();
+        mCurrentContext.getJSModule(HMRClient.class).enable("android", path, host, port);
+      } catch (MalformedURLException e) {
+        showNewJavaError(e.getMessage(), e);
+      }
+    }
+
     reloadSettings();
   }
 
@@ -552,7 +591,7 @@ public class DevSupportManagerImpl implements DevSupportManager {
   private void reloadJSInProxyMode(final ProgressDialog progressDialog) {
     // When using js proxy, there is no need to fetch JS bundle as proxy executor will do that
     // anyway
-    mDevServerHelper.launchChromeDevtools();
+    mDevServerHelper.launchJSDevtools();
 
     JavaJSExecutor.Factory factory = new JavaJSExecutor.Factory() {
       @Override
@@ -622,7 +661,7 @@ public class DevSupportManagerImpl implements DevSupportManager {
                   public void run() {
                     if (cause instanceof DebugServerException) {
                       DebugServerException debugServerException = (DebugServerException) cause;
-                      showNewJavaError(debugServerException.description, cause);
+                      showNewJavaError(debugServerException.getMessage(), cause);
                     } else {
                       showNewJavaError(
                           mApplicationContext.getString(R.string.catalyst_jsload_error),

@@ -8,7 +8,6 @@
  */
 'use strict';
 
-const _ = require('underscore');
 const ModuleTransport = require('../lib/ModuleTransport');
 
 class BundleBase {
@@ -16,7 +15,7 @@ class BundleBase {
     this._finalized = false;
     this._modules = [];
     this._assets = [];
-    this._mainModuleId = this._mainModuleName = undefined;
+    this._mainModuleId = undefined;
   }
 
   isEmpty() {
@@ -31,20 +30,20 @@ class BundleBase {
     this._mainModuleId = moduleId;
   }
 
-  getMainModuleName() {
-    return this._mainModuleName;
-  }
-
-  setMainModuleName(moduleName) {
-    this._mainModuleName = moduleName;
-  }
-
   addModule(module) {
-    if (!module instanceof ModuleTransport) {
+    if (!(module instanceof ModuleTransport)) {
       throw new Error('Expeceted a ModuleTransport object');
     }
 
-    this._modules.push(module);
+    return this._modules.push(module) - 1;
+  }
+
+  replaceModuleAt(index, module) {
+    if (!(module instanceof ModuleTransport)) {
+      throw new Error('Expeceted a ModuleTransport object');
+    }
+
+    this._modules[index] = module;
   }
 
   getModules() {
@@ -61,9 +60,8 @@ class BundleBase {
 
   finalize(options) {
     Object.freeze(this._modules);
-    Object.seal(this._modules);
     Object.freeze(this._assets);
-    Object.seal(this._assets);
+
     this._finalized = true;
   }
 
@@ -74,7 +72,7 @@ class BundleBase {
       return this._source;
     }
 
-    this._source = _.pluck(this._modules, 'code').join('\n');
+    this._source = this._modules.map((module) => module.code).join('\n');
     return this._source;
   }
 
@@ -89,7 +87,6 @@ class BundleBase {
       modules: this._modules,
       assets: this._assets,
       mainModuleId: this.getMainModuleId(),
-      mainModuleName: this.getMainModuleName(),
     };
   }
 
@@ -97,12 +94,10 @@ class BundleBase {
     bundle._assets = json.assets;
     bundle._modules = json.modules;
     bundle.setMainModuleId(json.mainModuleId);
-    bundle.setMainModuleName(json.mainModuleName);
 
     Object.freeze(bundle._modules);
-    Object.seal(bundle._modules);
     Object.freeze(bundle._assets);
-    Object.seal(bundle._assets);
+
     bundle._finalized = true;
   }
 }

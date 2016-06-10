@@ -13,7 +13,7 @@
 
 var RCTDeviceEventEmitter = require('RCTDeviceEventEmitter');
 var RCTPushNotificationManager = require('NativeModules').PushNotificationManager;
-var invariant = require('invariant');
+var invariant = require('fbjs/lib/invariant');
 
 var _notifHandlers = new Map();
 var _initialNotification = RCTPushNotificationManager &&
@@ -21,6 +21,7 @@ var _initialNotification = RCTPushNotificationManager &&
 
 var DEVICE_NOTIF_EVENT = 'remoteNotificationReceived';
 var NOTIF_REGISTER_EVENT = 'remoteNotificationsRegistered';
+var DEVICE_LOCAL_NOTIF_EVENT = 'localNotificationReceived';
 
 /**
  * Handle push notifications for your app, including permission handling and
@@ -59,6 +60,11 @@ var NOTIF_REGISTER_EVENT = 'remoteNotificationsRegistered';
  *    {
  *     [RCTPushNotificationManager didReceiveRemoteNotification:notification];
  *    }
+ *    // Required for the localNotification event.
+ *    - (void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification
+ *    {
+ *     [RCTPushNotificationManager didReceiveLocalNotification:notification];
+ *    }
  *   ```
  */
 class PushNotificationIOS {
@@ -73,8 +79,11 @@ class PushNotificationIOS {
    * details is an object containing:
    *
    * - `alertBody` : The message displayed in the notification alert.
+   * - `alertAction` : The "action" displayed beneath an actionable notification. Defaults to "view";
    * - `soundName` : The sound played when the notification is fired (optional).
-   *
+   * - `category`  : The category of this notification, required for actionable notifications (optional).
+   * - `userInfo`  : An optional object containing additional notification data.
+   * - `applicationIconBadgeNumber` (optional) : The number to display as the app’s icon badge. The default value of this property is 0, which means that no badge is displayed.
    */
   static presentLocalNotification(details: Object) {
     RCTPushNotificationManager.presentLocalNotification(details);
@@ -87,8 +96,11 @@ class PushNotificationIOS {
    *
    * - `fireDate` : The date and time when the system should deliver the notification.
    * - `alertBody` : The message displayed in the notification alert.
+   * - `alertAction` : The "action" displayed beneath an actionable notification. Defaults to "view";
    * - `soundName` : The sound played when the notification is fired (optional).
-   *
+   * - `category`  : The category of this notification, required for actionable notifications (optional).
+   * - `userInfo` : An optional object containing additional notification data.
+   * - `applicationIconBadgeNumber` (optional) : The number to display as the app’s icon badge. Setting the number to 0 removes the icon badge.
    */
   static scheduleLocalNotification(details: Object) {
     RCTPushNotificationManager.scheduleLocalNotification(details);
@@ -116,25 +128,45 @@ class PushNotificationIOS {
   }
 
   /**
-   * Attaches a listener to remote notification events while the app is running
+   * Cancel local notifications.
+   *
+   * Optionally restricts the set of canceled notifications to those
+   * notifications whose `userInfo` fields match the corresponding fields
+   * in the `userInfo` argument.
+   */
+  static cancelLocalNotifications(userInfo: Object) {
+    RCTPushNotificationManager.cancelLocalNotifications(userInfo);
+  }
+
+  /**
+   * Attaches a listener to remote or local notification events while the app is running
    * in the foreground or the background.
    *
    * Valid events are:
    *
    * - `notification` : Fired when a remote notification is received. The
    *   handler will be invoked with an instance of `PushNotificationIOS`.
+   * - `localNotification` : Fired when a local notification is received. The
+   *   handler will be invoked with an instance of `PushNotificationIOS`.
    * - `register`: Fired when the user registers for remote notifications. The
    *   handler will be invoked with a hex string representing the deviceToken.
    */
   static addEventListener(type: string, handler: Function) {
     invariant(
-      type === 'notification' || type === 'register',
-      'PushNotificationIOS only supports `notification` and `register` events'
+      type === 'notification' || type === 'register' || type === 'localNotification',
+      'PushNotificationIOS only supports `notification`, `register` and `localNotification` events'
     );
     var listener;
     if (type === 'notification') {
       listener =  RCTDeviceEventEmitter.addListener(
         DEVICE_NOTIF_EVENT,
+        (notifData) => {
+          handler(new PushNotificationIOS(notifData));
+        }
+      );
+    } else if (type === 'localNotification') {
+      listener = RCTDeviceEventEmitter.addListener(
+        DEVICE_LOCAL_NOTIF_EVENT,
         (notifData) => {
           handler(new PushNotificationIOS(notifData));
         }
@@ -220,8 +252,8 @@ class PushNotificationIOS {
    */
   static removeEventListener(type: string, handler: Function) {
     invariant(
-      type === 'notification' || type === 'register',
-      'PushNotificationIOS only supports `notification` and `register` events'
+      type === 'notification' || type === 'register' || type === 'localNotification',
+      'PushNotificationIOS only supports `notification`, `register` and `localNotification` events'
     );
     var listener = _notifHandlers.get(handler);
     if (!listener) {
