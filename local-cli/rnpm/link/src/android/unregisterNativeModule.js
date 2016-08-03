@@ -1,7 +1,7 @@
 const fs = require('fs');
 const getReactVersion = require('../getReactNativeVersion');
 const getPrefix = require('./getPrefix');
-const toCamelCase = require('to-camel-case');
+const toCamelCase = require('lodash').camelCase;
 
 const revokePatch = require('./patches/revokePatch');
 const makeSettingsPatch = require('./patches/makeSettingsPatch');
@@ -36,12 +36,12 @@ module.exports = function unregisterNativeAndroidModule(
   revokePatch(projectConfig.stringsPath, makeStringsPatch(params, name));
 
   revokePatch(
-    projectConfig.mainActivityPath,
+    projectConfig.mainFilePath,
     makePackagePatch(androidConfig.packageInstance, params, name)
   );
 
   revokePatch(
-    projectConfig.mainActivityPath,
+    projectConfig.mainFilePath,
     makeImportPatch(androidConfig.packageImportPath)
   );
 };
