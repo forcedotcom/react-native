@@ -4,7 +4,7 @@ package = JSON.parse(File.read(File.join(__dir__, 'package.json')))
 
 Pod::Spec.new do |s|
   s.name                = "React"
-  s.version             = "0.30.0"
+  s.version             = "0.35.0"
   s.summary             = package['description']
   s.description         = <<-DESC
                             React Native apps are built using the React JS
@@ -57,7 +57,6 @@ Pod::Spec.new do |s|
   s.subspec 'RCTAnimation' do |ss|
     ss.dependency       'React/Core'
     ss.source_files   = "Libraries/NativeAnimation/{Nodes/*,*}.{h,m}"
-    ss.preserve_paths = "Libraries/NativeAnimation/*.js"
   end
 
   s.subspec 'RCTCameraRoll' do |ss|
@@ -82,7 +81,7 @@ Pod::Spec.new do |s|
 
   s.subspec 'RCTNetwork' do |ss|
     ss.dependency       'React/Core'
-    ss.source_files   = "Libraries/Network/*.{h,m}"
+    ss.source_files   = "Libraries/Network/*.{h,m,mm}"
     ss.preserve_paths = "Libraries/Network/*.js"
   end
 

@@ -32,7 +32,7 @@ var onlyChild = require('react/lib/onlyChild');
 type Event = Object;
 
 var DEFAULT_PROPS = {
-  activeOpacity: 0.8,
+  activeOpacity: 0.85,
   underlayColor: 'black',
 };
 
@@ -54,7 +54,7 @@ var PRESS_RETENTION_OFFSET = {top: 20, left: 20, right: 20, bottom: 30};
  *     <TouchableHighlight onPress={this._onPressButton}>
  *       <Image
  *         style={styles.button}
- *         source={require('image!myButton')}
+ *         source={require('./myButton.png')}
  *       />
  *     </TouchableHighlight>
  *   );

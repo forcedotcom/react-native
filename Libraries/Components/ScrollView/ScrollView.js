@@ -178,9 +178,9 @@ const ScrollView = React.createClass({
     ]),
     /**
      * When false, tapping outside of the focused text input when the keyboard
-     * is up dismisses the keyboard. When true, the scroll view will not catch
-     * taps, and the keyboard will not dismiss automatically. The default value
-     * is false.
+     * is up dismisses the keyboard. When true, the keyboard will not dismiss
+     * automatically, and the scroll view will not catch taps, but children of
+     * the scroll view can catch taps. The default value is false.
      */
     keyboardShouldPersistTaps: PropTypes.bool,
     /**
@@ -390,7 +390,7 @@ const ScrollView = React.createClass({
 
   _handleScroll: function(e: Object) {
     if (__DEV__) {
-      if (this.props.onScroll && !this.props.scrollEventThrottle && Platform.OS === 'ios') {
+      if (this.props.onScroll && this.props.scrollEventThrottle == null && Platform.OS === 'ios') {
         console.log( // eslint-disable-line no-console-disallow
           'You specified `onScroll` on a <ScrollView> but not ' +
           '`scrollEventThrottle`. You will only receive one event. ' +
