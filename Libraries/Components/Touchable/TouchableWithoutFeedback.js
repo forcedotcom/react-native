@@ -18,7 +18,6 @@ const Touchable = require('Touchable');
 const View = require('View');
 
 const ensurePositiveDelayProps = require('ensurePositiveDelayProps');
-const onlyChild = require('react/lib/onlyChild');
 const warning = require('fbjs/lib/warning');
 
 type Event = Object;
@@ -27,12 +26,10 @@ const PRESS_RETENTION_OFFSET = {top: 20, left: 20, right: 20, bottom: 30};
 
 /**
  * Do not use unless you have a very good reason. All the elements that
- * respond to press should have a visual feedback when touched. This is
- * one of the primary reason a "web" app doesn't feel "native".
+ * respond to press should have a visual feedback when touched.
  *
- * > **NOTE**: TouchableWithoutFeedback supports only one child
- * >
- * > If you wish to have several child components, wrap them in a View.
+ * TouchableWithoutFeedback supports only one child.
+ * If you wish to have several child components, wrap them in a View.
  */
 const TouchableWithoutFeedback = React.createClass({
   mixins: [TimerMixin, Touchable.Mixin],
@@ -148,9 +145,9 @@ const TouchableWithoutFeedback = React.createClass({
     return this.props.delayPressOut || 0;
   },
 
-  render: function(): ReactElement<any> {
+  render: function(): React.Element<any> {
     // Note(avik): remove dynamic typecast once Flow has been upgraded
-    const child = onlyChild(this.props.children);
+    const child = React.Children.only(this.props.children);
     let children = child.props.children;
     warning(
       !child.type || child.type.displayName !== 'Text',
@@ -158,9 +155,7 @@ const TouchableWithoutFeedback = React.createClass({
         ((child._owner && child._owner.getName && child._owner.getName()) || '<unknown>')
     );
     if (Touchable.TOUCH_TARGET_DEBUG && child.type && child.type.displayName === 'View') {
-      if (!Array.isArray(children)) {
-        children = [children];
-      }
+      children = React.Children.toArray(children);
       children.push(Touchable.renderDebugView({color: 'red', hitSlop: this.props.hitSlop}));
     }
     const style = (Touchable.TOUCH_TARGET_DEBUG && child.type && child.type.displayName === 'Text') ?

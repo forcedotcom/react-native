@@ -5,15 +5,20 @@
 #include <memory>
 #include <vector>
 
+#include <cxxreact/ExecutorToken.h>
+#include <cxxreact/NativeModule.h>
+#include <folly/Optional.h>
 #include <folly/dynamic.h>
-
-#include "ExecutorToken.h"
-#include "NativeModule.h"
 
 namespace facebook {
 namespace react {
 
 class NativeModule;
+
+struct ModuleConfig {
+  size_t index;
+  folly::dynamic config;
+};
 
 class ModuleRegistry {
  public:
@@ -26,7 +31,9 @@ class ModuleRegistry {
 
   ModuleRegistry(std::vector<std::unique_ptr<NativeModule>> modules);
   std::vector<std::string> moduleNames();
-  folly::dynamic getConfig(const std::string& name);
+
+  folly::Optional<ModuleConfig> getConfig(const std::string& name);
+
   void callNativeMethod(ExecutorToken token, unsigned int moduleId, unsigned int methodId,
                         folly::dynamic&& params, int callId);
   MethodCallResult callSerializableNativeHook(ExecutorToken token, unsigned int moduleId, unsigned int methodId, folly::dynamic&& args);

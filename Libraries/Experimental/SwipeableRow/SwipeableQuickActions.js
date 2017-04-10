@@ -27,8 +27,6 @@ const React = require('React');
 const StyleSheet = require('StyleSheet');
 const View = require('View');
 
-const MAX_QUICK_ACTIONS = 2;
-
 /**
  * A thin wrapper around standard quick action buttons that can, if the user
  * chooses, be used with SwipeableListView. Sample usage is as follows, in the
@@ -46,14 +44,14 @@ class SwipeableQuickActions extends React.Component {
     style: View.propTypes.style,
   };
 
-  render(): ReactElement<any> {
+  render(): React.Element<any> {
     // $FlowFixMe found when converting React.createClass to ES6
     const children = this.props.children;
     let buttons = [];
 
     // Multiple children
     if (children instanceof Array) {
-      for (let i = 0; i < children.length && i < MAX_QUICK_ACTIONS; i++) {
+      for (let i = 0; i < children.length; i++) {
         buttons.push(children[i]);
 
         // $FlowFixMe found when converting React.createClass to ES6

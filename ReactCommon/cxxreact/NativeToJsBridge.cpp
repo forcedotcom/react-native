@@ -41,21 +41,16 @@ public:
     return m_nativeToJs->unregisterExecutor(executor);
   }
 
-  std::vector<std::string> moduleNames() override {
-    // If this turns out to be too expensive to run on the js thread,
-    // we can compute it in the ctor, and just return std::move() it
-    // here.
-    return m_registry->moduleNames();
-  }
-
-  folly::dynamic getModuleConfig(const std::string& name) override {
-    return m_registry->getConfig(name);
+  std::shared_ptr<ModuleRegistry> getModuleRegistry() override {
+    return m_registry;
   }
 
   void callNativeModules(
       JSExecutor& executor, folly::dynamic&& calls, bool isEndOfBatch) override {
     ExecutorToken token = m_nativeToJs->getTokenForExecutor(executor);
     m_nativeQueue->runOnQueue([this, token, calls=std::move(calls), isEndOfBatch] () mutable {
+      m_batchHadNativeModuleCalls = m_batchHadNativeModuleCalls || !calls.empty();
+
       // An exception anywhere in here stops processing of the batch.  This
       // was the behavior of the Android bridge, and since exception handling
       // terminates the whole bridge, there's not much point in continuing.
@@ -64,7 +59,10 @@ public:
           token, call.moduleId, call.methodId, std::move(call.arguments), call.callId);
       }
       if (isEndOfBatch) {
-        m_callback->onBatchComplete();
+        if (m_batchHadNativeModuleCalls) {
+          m_callback->onBatchComplete();
+          m_batchHadNativeModuleCalls = false;
+        }
         m_callback->decrementPendingJSCalls();
       }
     });
@@ -92,6 +90,7 @@ private:
   std::shared_ptr<ModuleRegistry> m_registry;
   std::unique_ptr<MessageQueueThread> m_nativeQueue;
   std::shared_ptr<InstanceCallback> m_callback;
+  bool m_batchHadNativeModuleCalls = false;
 };
 
 NativeToJsBridge::NativeToJsBridge(
@@ -118,41 +117,35 @@ NativeToJsBridge::~NativeToJsBridge() {
     "NativeToJsBridge::destroy() must be called before deallocating the NativeToJsBridge!";
 }
 
-void NativeToJsBridge::loadApplicationScript(std::unique_ptr<const JSBigString> script,
-                                             std::string sourceURL) {
-  // TODO(t11144533): Add assert that we are on the correct thread
-  m_mainExecutor->loadApplicationScript(std::move(script), std::move(sourceURL));
-}
-
-void NativeToJsBridge::loadOptimizedApplicationScript(
-    std::string bundlePath,
-    std::string sourceURL,
-    int flags) {
-  runOnExecutorQueue(
-      m_mainExecutorToken,
-      [bundlePath=std::move(bundlePath),
-       sourceURL=std::move(sourceURL),
-       flags=flags]
-        (JSExecutor* executor) {
-    executor->loadApplicationScript(std::move(bundlePath), std::move(sourceURL), flags);
-  });
-}
-
-void NativeToJsBridge::loadApplicationUnbundle(
+void NativeToJsBridge::loadApplication(
     std::unique_ptr<JSModulesUnbundle> unbundle,
     std::unique_ptr<const JSBigString> startupScript,
     std::string startupScriptSourceURL) {
   runOnExecutorQueue(
       m_mainExecutorToken,
-      [unbundle=folly::makeMoveWrapper(std::move(unbundle)),
+      [unbundleWrap=folly::makeMoveWrapper(std::move(unbundle)),
        startupScript=folly::makeMoveWrapper(std::move(startupScript)),
        startupScriptSourceURL=std::move(startupScriptSourceURL)]
         (JSExecutor* executor) mutable {
 
-    executor->setJSModulesUnbundle(unbundle.move());
+    auto unbundle = unbundleWrap.move();
+    if (unbundle) {
+      executor->setJSModulesUnbundle(std::move(unbundle));
+    }
     executor->loadApplicationScript(std::move(*startupScript),
                                     std::move(startupScriptSourceURL));
   });
+}
+
+void NativeToJsBridge::loadApplicationSync(
+    std::unique_ptr<JSModulesUnbundle> unbundle,
+    std::unique_ptr<const JSBigString> startupScript,
+    std::string startupScriptSourceURL) {
+  if (unbundle) {
+    m_mainExecutor->setJSModulesUnbundle(std::move(unbundle));
+  }
+  m_mainExecutor->loadApplicationScript(std::move(startupScript),
+                                        std::move(startupScriptSourceURL));
 }
 
 void NativeToJsBridge::callFunction(

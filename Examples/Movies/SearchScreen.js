@@ -12,6 +12,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * @flow
+ * @providesModule SearchScreen
  */
 'use strict';
 
@@ -299,7 +300,7 @@ var SearchScreen = React.createClass({
         onEndReached={this.onEndReached}
         automaticallyAdjustContentInsets={false}
         keyboardDismissMode="on-drag"
-        keyboardShouldPersistTaps={true}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       />;
 

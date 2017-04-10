@@ -19,6 +19,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * @flow
+ * @providesModule MapViewExample
  */
 'use strict';
 
@@ -242,6 +243,7 @@ class AnnotationExample extends React.Component {
 
     return (
       <MapView
+        showsAnnotationCallouts={this.props.showsAnnotationCallouts}
         style={styles.map}
         onRegionChangeComplete={onRegionChangeComplete}
         region={this.state.mapRegion}
@@ -364,6 +366,29 @@ exports.examples = [
           </TouchableOpacity>
         ),
       }}/>;
+    }
+  },
+  {
+    title: 'Show callouts by default example',
+    render() {
+      return <AnnotationExample
+        style={styles.map}
+        annotation={{
+          title: 'More Info...',
+          rightCalloutView: (
+            <TouchableOpacity
+              onPress={() => {
+                alert('You Are Here');
+              }}>
+              <Image
+                style={{width:30, height:30}}
+                source={require('./uie_thumb_selected.png')}
+              />
+            </TouchableOpacity>
+          ),
+        }}
+        showsAnnotationCallouts={true}
+      />;
     }
   },
   {

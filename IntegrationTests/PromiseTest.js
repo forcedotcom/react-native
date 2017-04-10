@@ -7,6 +7,7 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  *
  * @flow
+ * @providesModule PromiseTest
  */
 'use strict';
 
@@ -65,7 +66,7 @@ class PromiseTest extends React.Component {
     }
   };
 
-  render(): ReactElement<any> {
+  render(): React.Element<any> {
     return <View />;
   }
 }

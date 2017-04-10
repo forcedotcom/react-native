@@ -16,6 +16,8 @@ import android.util.DisplayMetrics;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.ImageView;
 
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.common.MapBuilder;
 import com.facebook.react.uimanager.events.TouchEventType;
 
@@ -77,10 +79,11 @@ import com.facebook.react.uimanager.events.TouchEventType;
         .put("topLoadingFinish", MapBuilder.of("registrationName", "onLoadingFinish"))
         .put("topLoadingStart", MapBuilder.of("registrationName", "onLoadingStart"))
         .put("topSelectionChange", MapBuilder.of("registrationName", "onSelectionChange"))
+        .put("topMessage", MapBuilder.of("registrationName", "onMessage"))
         .build();
   }
 
-  public static Map<String, Object> getConstants() {
+  public static Map<String, Object> getConstants(float fontScale) {
     HashMap<String, Object> constants = new HashMap<String, Object>();
     constants.put(
         "UIView",
@@ -94,35 +97,9 @@ import com.facebook.react.uimanager.events.TouchEventType;
                 "ScaleAspectCenter",
                 ImageView.ScaleType.CENTER_INSIDE.ordinal())));
 
-    DisplayMetrics displayMetrics = DisplayMetricsHolder.getWindowDisplayMetrics();
-    DisplayMetrics screenDisplayMetrics = DisplayMetricsHolder.getScreenDisplayMetrics();
     constants.put(
         "Dimensions",
-        MapBuilder.of(
-            "windowPhysicalPixels",
-            MapBuilder.of(
-                "width",
-                displayMetrics.widthPixels,
-                "height",
-                displayMetrics.heightPixels,
-                "scale",
-                displayMetrics.density,
-                "fontScale",
-                displayMetrics.scaledDensity,
-                "densityDpi",
-                displayMetrics.densityDpi),
-        "screenPhysicalPixels",
-        MapBuilder.of(
-            "width",
-            screenDisplayMetrics.widthPixels,
-            "height",
-            screenDisplayMetrics.heightPixels,
-            "scale",
-            screenDisplayMetrics.density,
-            "fontScale",
-            screenDisplayMetrics.scaledDensity,
-            "densityDpi",
-            screenDisplayMetrics.densityDpi)));
+        getDimensionsConstants(fontScale));
 
     constants.put(
         "StyleConstants",
@@ -155,5 +132,30 @@ import com.facebook.react.uimanager.events.TouchEventType;
           AccessibilityEvent.TYPE_VIEW_CLICKED));
 
     return constants;
+  }
+
+  public static WritableMap getDimensionsConstants(float fontScale) {
+    DisplayMetrics windowDisplayMetrics = DisplayMetricsHolder.getWindowDisplayMetrics();
+    DisplayMetrics screenDisplayMetrics = DisplayMetricsHolder.getScreenDisplayMetrics();
+
+    WritableMap windowDisplayMetricsMap = Arguments.createMap();
+    windowDisplayMetricsMap.putInt("width", windowDisplayMetrics.widthPixels);
+    windowDisplayMetricsMap.putInt("height", windowDisplayMetrics.heightPixels);
+    windowDisplayMetricsMap.putDouble("scale", windowDisplayMetrics.density);
+    windowDisplayMetricsMap.putDouble("fontScale", fontScale);
+    windowDisplayMetricsMap.putDouble("densityDpi", windowDisplayMetrics.densityDpi);
+
+    WritableMap screenDisplayMetricsMap = Arguments.createMap();
+    screenDisplayMetricsMap.putInt("width", screenDisplayMetrics.widthPixels);
+    screenDisplayMetricsMap.putInt("height", screenDisplayMetrics.heightPixels);
+    screenDisplayMetricsMap.putDouble("scale", screenDisplayMetrics.density);
+    screenDisplayMetricsMap.putDouble("fontScale", fontScale);
+    screenDisplayMetricsMap.putDouble("densityDpi", screenDisplayMetrics.densityDpi);
+
+    WritableMap dimensionsMap = Arguments.createMap();
+    dimensionsMap.putMap("windowPhysicalPixels", windowDisplayMetricsMap);
+    dimensionsMap.putMap("screenPhysicalPixels", screenDisplayMetricsMap);
+    
+    return dimensionsMap;
   }
 }

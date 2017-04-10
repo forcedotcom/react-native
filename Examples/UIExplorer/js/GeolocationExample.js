@@ -19,6 +19,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * @flow
+ * @providesModule GeolocationExample
  */
 /* eslint no-console: 0 */
 'use strict';
@@ -39,7 +40,7 @@ exports.description = 'Examples of using the Geolocation API.';
 exports.examples = [
   {
     title: 'navigator.geolocation',
-    render: function(): ReactElement<any> {
+    render: function(): React.Element<any> {
       return <GeolocationExample />;
     },
   }

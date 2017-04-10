@@ -10,19 +10,20 @@
  */
 'use strict';
 
-const Config = require('./util/Config');
-const getUserCommands = require('./core/getCommands');
+const { getProjectCommands } = require('./core');
 
-export type Command = {
+import type { ConfigT } from './core';
+
+export type CommandT = {
   name: string,
   description?: string,
   usage?: string,
-  func: (argv: Array<string>, config: Config, args: Object) => ?Promise<void>,
+  func: (argv: Array<string>, config: ConfigT, args: Object) => ?Promise<void>,
   options?: Array<{
     command: string,
     description?: string,
     parse?: (val: string) => any,
-    default?: (config: Config) => any | any,
+    default?: (config: ConfigT) => any | any,
   }>,
   examples?: Array<{
     desc: string,
@@ -35,13 +36,13 @@ export type Command = {
 };
 
 const documentedCommands = [
-  require('./android/android'),
   require('./server/server'),
   require('./runIOS/runIOS'),
   require('./runAndroid/runAndroid'),
   require('./library/library'),
   require('./bundle/bundle'),
   require('./bundle/unbundle'),
+  require('./eject/eject'),
   require('./link/link'),
   require('./link/unlink'),
   require('./install/install'),
@@ -60,16 +61,16 @@ const undocumentedCommands = [
     func: () => {
       console.log([
         'Looks like React Native project already exists in the current',
-        'folder. Run this command from a different folder or remove node_modules/react-native'
+        'folder. Run this command from a different folder or remove node_modules/react-native',
       ].join('\n'));
     },
   },
 ];
 
-const commands: Array<Command> = [
+const commands: Array<CommandT> = [
   ...documentedCommands,
   ...undocumentedCommands,
-  ...getUserCommands(),
+  ...getProjectCommands(),
 ];
 
 module.exports = commands;

@@ -19,6 +19,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * @flow
+ * @providesModule PushNotificationIOSExample
  */
 'use strict';
 
@@ -193,7 +194,7 @@ exports.description = 'Apple PushNotification and badge value';
 exports.examples = [
 {
   title: 'Badge Number',
-  render(): ReactElement<any> {
+  render(): React.Element<any> {
     return (
       <View>
         <Button
@@ -210,13 +211,13 @@ exports.examples = [
 },
 {
   title: 'Push Notifications',
-  render(): ReactElement<any> {
+  render(): React.Element<any> {
     return <NotificationExample />;
   }
 },
 {
   title: 'Notifications Permissions',
-  render(): ReactElement<any> {
+  render(): React.Element<any> {
     return <NotificationPermissionExample />;
   }
 }];

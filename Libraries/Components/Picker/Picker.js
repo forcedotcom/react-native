@@ -17,7 +17,6 @@ var PickerIOS = require('PickerIOS');
 var PickerAndroid = require('PickerAndroid');
 var Platform = require('Platform');
 var React = require('React');
-var StyleSheet = require('StyleSheet');
 var StyleSheetPropType = require('StyleSheetPropType');
 var TextStylePropTypes = require('TextStylePropTypes');
 var UnimplementedView = require('UnimplementedView');
@@ -135,7 +134,7 @@ Picker.Item = class extends React.Component {
  props: {
   label: string,
   value?: any,
-  color?: $FlowFixMe,
+  color?: ColorPropType,
   testID?: string,
  };
 
