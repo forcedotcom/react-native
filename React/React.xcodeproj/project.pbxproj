@@ -765,6 +765,10 @@
 		B50558421E43E14000F71A00 /* RCTDevSettings.mm in Sources */ = {isa = PBXBuildFile; fileRef = B505583D1E43DFB900F71A00 /* RCTDevSettings.mm */; };
 		B50558431E43E64600F71A00 /* RCTDevSettings.h in Headers */ = {isa = PBXBuildFile; fileRef = B505583C1E43DFB900F71A00 /* RCTDevSettings.h */; };
 		B95154321D1B34B200FE7B80 /* RCTActivityIndicatorView.m in Sources */ = {isa = PBXBuildFile; fileRef = B95154311D1B34B200FE7B80 /* RCTActivityIndicatorView.m */; };
+		CE39935D1E9C236300DC161C /* RCTReconnectingWebSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = CE39935B1E9C236300DC161C /* RCTReconnectingWebSocket.m */; };
+		CE39935E1E9C236300DC161C /* RCTSRWebSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = CE39935C1E9C236300DC161C /* RCTSRWebSocket.m */; };
+		CE39935F1E9C236C00DC161C /* RCTReconnectingWebSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = CE39935B1E9C236300DC161C /* RCTReconnectingWebSocket.m */; };
+		CE3993601E9C236F00DC161C /* RCTSRWebSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = CE39935C1E9C236300DC161C /* RCTSRWebSocket.m */; };
 		E9B20B7B1B500126007A2DA7 /* RCTAccessibilityManager.m in Sources */ = {isa = PBXBuildFile; fileRef = E9B20B7A1B500126007A2DA7 /* RCTAccessibilityManager.m */; };
 /* End PBXBuildFile section */
 
@@ -1427,6 +1431,8 @@
 		B505583D1E43DFB900F71A00 /* RCTDevSettings.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RCTDevSettings.mm; sourceTree = "<group>"; };
 		B95154301D1B34B200FE7B80 /* RCTActivityIndicatorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCTActivityIndicatorView.h; sourceTree = "<group>"; };
 		B95154311D1B34B200FE7B80 /* RCTActivityIndicatorView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCTActivityIndicatorView.m; sourceTree = "<group>"; };
+		CE39935B1E9C236300DC161C /* RCTReconnectingWebSocket.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCTReconnectingWebSocket.m; path = WebSocket/RCTReconnectingWebSocket.m; sourceTree = "<group>"; };
+		CE39935C1E9C236300DC161C /* RCTSRWebSocket.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RCTSRWebSocket.m; path = WebSocket/RCTSRWebSocket.m; sourceTree = "<group>"; };
 		E3BBC8EB1ADE6F47001BBD81 /* RCTTextDecorationLineType.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTTextDecorationLineType.h; sourceTree = "<group>"; };
 		E9B20B791B500126007A2DA7 /* RCTAccessibilityManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCTAccessibilityManager.h; sourceTree = "<group>"; };
 		E9B20B7A1B500126007A2DA7 /* RCTAccessibilityManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCTAccessibilityManager.m; sourceTree = "<group>"; };
@@ -1864,6 +1870,8 @@
 		A12E9E271E5DEB600029001B /* WebSocket */ = {
 			isa = PBXGroup;
 			children = (
+				CE39935B1E9C236300DC161C /* RCTReconnectingWebSocket.m */,
+				CE39935C1E9C236300DC161C /* RCTSRWebSocket.m */,
 				A12E9E281E5DEB860029001B /* RCTReconnectingWebSocket.h */,
 				A12E9E291E5DEB860029001B /* RCTSRWebSocket.h */,
 			);
@@ -2227,7 +2235,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 2D2A281B1D9B038B00D4039D /* Build configuration list for PBXNativeTarget "React-tvOS" */;
 			buildPhases = (
-				2D6948301DA3088700B3FA97 /* Start Packager */,
 				3D302F231DF828D100D6DDAE /* Headers */,
 				3D302E191DF8249100D6DDAE /* Copy Headers */,
 				2D2A280F1D9B038B00D4039D /* Sources */,
@@ -2353,7 +2360,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 83CBBA3F1A601D0F00E9B192 /* Build configuration list for PBXNativeTarget "React" */;
 			buildPhases = (
-				006B79A01A781F38006873D1 /* Start Packager */,
 				3D80DA181DF820500028D040 /* Headers */,
 				3D80D91E1DF6FA530028D040 /* Copy Headers */,
 				83CBBA2A1A601D0E00E9B192 /* Sources */,
@@ -2416,21 +2422,6 @@
 /* End PBXProject section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		006B79A01A781F38006873D1 /* Start Packager */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Start Packager";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "if [ -z \"${RCT_NO_LAUNCH_PACKAGER+xxx}\" ] ; then\n  if nc -w 5 -z localhost 8081 ; then\n    if ! curl -s \"http://localhost:8081/status\" | grep -q \"packager-status:running\" ; then\n      echo \"Port 8081 already in use, packager is either not running or not running correctly\"\n      exit 2\n    fi\n  else\n    open \"$SRCROOT/../packager/launchPackager.command\" || echo \"Can't start packager automatically\"\n  fi\nfi";
-			showEnvVarsInLog = 0;
-		};
 		142C4F7F1B582EA6001F0B58 /* Include RCTJSCProfiler */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -2461,21 +2452,6 @@
 			shellScript = "if [[ \"$CONFIGURATION\" == \"Debug\" ]] && [[ -d \"/tmp/RCTJSCProfiler\" ]]; then\nfind \"${CONFIGURATION_BUILD_DIR}\" -name '*.app' | xargs -I{} sh -c 'cp -r /tmp/RCTJSCProfiler \"$1\"' -- {}\nfi";
 			showEnvVarsInLog = 0;
 		};
-		2D6948301DA3088700B3FA97 /* Start Packager */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Start Packager";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "if [ -z \"${RCT_NO_LAUNCH_PACKAGER+xxx}\" ] ; then\nif nc -w 5 -z localhost 8081 ; then\nif ! curl -s \"http://localhost:8081/status\" | grep -q \"packager-status:running\" ; then\necho \"Port 8081 already in use, packager is either not running or not running correctly\"\nexit 2\nfi\nelse\nopen \"$SRCROOT/../packager/launchPackager.command\" || echo \"Can't start packager automatically\"\nfi\nfi";
-			showEnvVarsInLog = 0;
-		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -2484,6 +2460,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3D80D91B1DF6F8200028D040 /* RCTPlatform.m in Sources */,
+				CE3993601E9C236F00DC161C /* RCTSRWebSocket.m in Sources */,
 				2DD0EFE11DA84F2800B0C975 /* RCTStatusBarManager.m in Sources */,
 				2D3B5EC91D9B095C00451313 /* RCTBorderDrawing.m in Sources */,
 				B50558411E43E13D00F71A00 /* RCTDevMenu.m in Sources */,
@@ -2535,6 +2512,7 @@
 				A12E9E261E5DEB510029001B /* RCTPackagerClientResponder.m in Sources */,
 				2D3B5EEE1D9B09DA00451313 /* RCTView.m in Sources */,
 				594AD5D01E46D87500B07237 /* RCTScrollContentShadowView.m in Sources */,
+				CE39935F1E9C236C00DC161C /* RCTReconnectingWebSocket.m in Sources */,
 				2D3B5ECC1D9B096500451313 /* RCTConvert+MapKit.m in Sources */,
 				2D3B5E981D9B089500451313 /* RCTConvert.m in Sources */,
 				2D3B5EA71D9B08CE00451313 /* RCTTouchHandler.m in Sources */,
@@ -2641,6 +2619,7 @@
 			files = (
 				597AD1BF1E577D7800152581 /* RCTRootContentView.m in Sources */,
 				13456E961ADAD482009F94A7 /* RCTConvert+MapKit.m in Sources */,
+				CE39935E1E9C236300DC161C /* RCTSRWebSocket.m in Sources */,
 				13723B501A82FD3C00F88898 /* RCTStatusBarManager.m in Sources */,
 				000E6CEB1AB0E980000CDF4D /* RCTSourceCode.m in Sources */,
 				14A43DF31C20B1C900794BC8 /* RCTJSCProfiler.m in Sources */,
@@ -2656,6 +2635,7 @@
 				13B07FF01A69327A00A75B9A /* RCTExceptionsManager.m in Sources */,
 				13B202041BFB948C00C07393 /* RCTMapAnnotation.m in Sources */,
 				A12E9E8F1E5DFA620029001B /* RCTSamplingProfilerPackagerMethod.mm in Sources */,
+				CE39935D1E9C236300DC161C /* RCTReconnectingWebSocket.m in Sources */,
 				13BCE8091C99CB9D00DD7AAD /* RCTRootShadowView.m in Sources */,
 				14C2CA711B3AC63800E6CBB2 /* RCTModuleMethod.m in Sources */,
 				006FC4141D9B20820057AAAD /* RCTMultipartDataTask.m in Sources */,
