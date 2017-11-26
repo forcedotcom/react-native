@@ -351,8 +351,6 @@
 		3D0B842F1EC0B51200B2BD8E /* RCTTVNavigationEventEmitter.h in Headers */ = {isa = PBXBuildFile; fileRef = 3D0B842D1EC0B51200B2BD8E /* RCTTVNavigationEventEmitter.h */; };
 		3D0B84301EC0B51200B2BD8E /* RCTTVNavigationEventEmitter.m in Sources */ = {isa = PBXBuildFile; fileRef = 3D0B842E1EC0B51200B2BD8E /* RCTTVNavigationEventEmitter.m */; };
 		3D0E378A1F1CC40000DCAC9F /* RCTWebSocketModule.h in Headers */ = {isa = PBXBuildFile; fileRef = 3D0E37891F1CC40000DCAC9F /* RCTWebSocketModule.h */; };
-		3D0E378C1F1CC58C00DCAC9F /* RCTWebSocketObserver.h in Headers */ = {isa = PBXBuildFile; fileRef = 3D0E378B1F1CC58C00DCAC9F /* RCTWebSocketObserver.h */; };
-		3D0E378D1F1CC58F00DCAC9F /* RCTWebSocketObserver.h in Headers */ = {isa = PBXBuildFile; fileRef = 3D0E378B1F1CC58C00DCAC9F /* RCTWebSocketObserver.h */; };
 		3D0E378E1F1CC59100DCAC9F /* RCTWebSocketModule.h in Headers */ = {isa = PBXBuildFile; fileRef = 3D0E37891F1CC40000DCAC9F /* RCTWebSocketModule.h */; };
 		3D0E378F1F1CC5CF00DCAC9F /* RCTWebSocketModule.h in Copy Headers */ = {isa = PBXBuildFile; fileRef = 3D0E37891F1CC40000DCAC9F /* RCTWebSocketModule.h */; };
 		3D0E37901F1CC5E100DCAC9F /* RCTWebSocketModule.h in Copy Headers */ = {isa = PBXBuildFile; fileRef = 3D0E37891F1CC40000DCAC9F /* RCTWebSocketModule.h */; };
@@ -1114,6 +1112,7 @@
 		A2440AA21DF8D854006E7BFC /* RCTReloadCommand.h in Headers */ = {isa = PBXBuildFile; fileRef = A2440AA01DF8D854006E7BFC /* RCTReloadCommand.h */; };
 		A2440AA31DF8D854006E7BFC /* RCTReloadCommand.m in Sources */ = {isa = PBXBuildFile; fileRef = A2440AA11DF8D854006E7BFC /* RCTReloadCommand.m */; };
 		A2440AA41DF8D865006E7BFC /* RCTReloadCommand.h in Headers */ = {isa = PBXBuildFile; fileRef = A2440AA01DF8D854006E7BFC /* RCTReloadCommand.h */; };
+		A3EC46181FCA50960023746F /* libRCTWebSocket.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A3EC46101FCA50850023746F /* libRCTWebSocket.a */; };
 		AC70D2E91DE489E4002E6351 /* RCTJavaScriptLoader.mm in Sources */ = {isa = PBXBuildFile; fileRef = AC70D2E81DE489E4002E6351 /* RCTJavaScriptLoader.mm */; };
 		B233E6EA1D2D845D00BC68BA /* RCTI18nManager.m in Sources */ = {isa = PBXBuildFile; fileRef = B233E6E91D2D845D00BC68BA /* RCTI18nManager.m */; };
 		B95154321D1B34B200FE7B80 /* RCTActivityIndicatorView.m in Sources */ = {isa = PBXBuildFile; fileRef = B95154311D1B34B200FE7B80 /* RCTActivityIndicatorView.m */; };
@@ -1252,6 +1251,34 @@
 			proxyType = 1;
 			remoteGlobalIDString = 9936F3141F5F2E5B0010BF04;
 			remoteInfo = "privatedata-tvOS";
+		};
+		A3EC460F1FCA50850023746F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A3EC46081FCA50840023746F /* RCTWebSocket.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 3C86DF461ADF2C930047B81A;
+			remoteInfo = RCTWebSocket;
+		};
+		A3EC46111FCA50850023746F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A3EC46081FCA50840023746F /* RCTWebSocket.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 2D2A28881D9B049200D4039D;
+			remoteInfo = "RCTWebSocket-tvOS";
+		};
+		A3EC46131FCA50850023746F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A3EC46081FCA50840023746F /* RCTWebSocket.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 3DBE0D001F3B181A0099AA32;
+			remoteInfo = fishhook;
+		};
+		A3EC46151FCA50850023746F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A3EC46081FCA50840023746F /* RCTWebSocket.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 3DBE0D0D1F3B181C0099AA32;
+			remoteInfo = "fishhook-tvOS";
 		};
 /* End PBXContainerItemProxy section */
 
@@ -1963,7 +1990,6 @@
 		3D0B842D1EC0B51200B2BD8E /* RCTTVNavigationEventEmitter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCTTVNavigationEventEmitter.h; sourceTree = "<group>"; };
 		3D0B842E1EC0B51200B2BD8E /* RCTTVNavigationEventEmitter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCTTVNavigationEventEmitter.m; sourceTree = "<group>"; };
 		3D0E37891F1CC40000DCAC9F /* RCTWebSocketModule.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCTWebSocketModule.h; path = WebSocket/RCTWebSocketModule.h; sourceTree = "<group>"; };
-		3D0E378B1F1CC58C00DCAC9F /* RCTWebSocketObserver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RCTWebSocketObserver.h; path = WebSocket/RCTWebSocketObserver.h; sourceTree = "<group>"; };
 		3D1E68D81CABD13900DD7465 /* RCTDisplayLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCTDisplayLink.h; sourceTree = "<group>"; };
 		3D1E68D91CABD13900DD7465 /* RCTDisplayLink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCTDisplayLink.m; sourceTree = "<group>"; };
 		3D1FA07A1DE4F2EA00E03CC6 /* RCTNetworking.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCTNetworking.h; sourceTree = "<group>"; };
@@ -2139,6 +2165,7 @@
 		9936F3361F5F2F480010BF04 /* PrivateDataBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PrivateDataBase.h; path = privatedata/PrivateDataBase.h; sourceTree = "<group>"; };
 		A2440AA01DF8D854006E7BFC /* RCTReloadCommand.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCTReloadCommand.h; sourceTree = "<group>"; };
 		A2440AA11DF8D854006E7BFC /* RCTReloadCommand.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCTReloadCommand.m; sourceTree = "<group>"; };
+		A3EC46081FCA50840023746F /* RCTWebSocket.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTWebSocket.xcodeproj; path = WebSocket/RCTWebSocket.xcodeproj; sourceTree = "<group>"; };
 		AC70D2E81DE489E4002E6351 /* RCTJavaScriptLoader.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RCTJavaScriptLoader.mm; sourceTree = "<group>"; };
 		AC70D2EB1DE48A22002E6351 /* JSBundleType.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = JSBundleType.cpp; sourceTree = "<group>"; };
 		AC70D2EE1DE48AC5002E6351 /* oss-compat-util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "oss-compat-util.h"; sourceTree = "<group>"; };
@@ -2172,6 +2199,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A3EC46181FCA50960023746F /* libRCTWebSocket.a in Frameworks */,
 				3D383D6D1EBD2940005632C8 /* libdouble-conversion.a in Frameworks */,
 				3D383D6E1EBD2940005632C8 /* libjschelpers.a in Frameworks */,
 				3D383D6F1EBD2940005632C8 /* libthird-party.a in Frameworks */,
@@ -2628,7 +2656,7 @@
 		3D7BFD2A1EA8E3D3008DFB7A /* WebSocket */ = {
 			isa = PBXGroup;
 			children = (
-				3D0E378B1F1CC58C00DCAC9F /* RCTWebSocketObserver.h */,
+				A3EC46081FCA50840023746F /* RCTWebSocket.xcodeproj */,
 				3D0E37891F1CC40000DCAC9F /* RCTWebSocketModule.h */,
 				3D7BFD2B1EA8E3FA008DFB7A /* RCTReconnectingWebSocket.h */,
 				3D7BFD2C1EA8E3FA008DFB7A /* RCTSRWebSocket.h */,
@@ -2681,6 +2709,7 @@
 				3D1FA0781DE4F2CD00E03CC6 /* Libraries */,
 				3D92B1151E036A690018521A /* ThirdParty */,
 				83CBBA001A601CBA00E9B192 /* Products */,
+				A3EC46171FCA50960023746F /* Frameworks */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -2816,6 +2845,24 @@
 			name = privatedata;
 			sourceTree = "<group>";
 		};
+		A3EC46091FCA50840023746F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A3EC46101FCA50850023746F /* libRCTWebSocket.a */,
+				A3EC46121FCA50850023746F /* libRCTWebSocket-tvOS.a */,
+				A3EC46141FCA50850023746F /* libfishhook.a */,
+				A3EC46161FCA50850023746F /* libfishhook-tvOS.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A3EC46171FCA50960023746F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		AC70D2EA1DE489FC002E6351 /* cxxreact */ = {
 			isa = PBXGroup;
 			children = (
@@ -2904,7 +2951,6 @@
 				3D7AA9C51E548CDB001955CF /* NSDataBigString.h in Headers */,
 				5960C1BA1F0804A00066FD5B /* RCTLayoutAnimationGroup.h in Headers */,
 				13134C991E296B2A00B9F3CB /* RCTCxxMethod.h in Headers */,
-				3D0E378D1F1CC58F00DCAC9F /* RCTWebSocketObserver.h in Headers */,
 				3D302F471DF828F800D6DDAE /* RCTPlatform.h in Headers */,
 				13134C951E296B2A00B9F3CB /* RCTObjcExecutor.h in Headers */,
 				590D7BFE1EBD458B00D8A370 /* RCTShadowView+Layout.h in Headers */,
@@ -3275,7 +3321,6 @@
 				3D80DA4A1DF820620028D040 /* RCTAccessibilityManager.h in Headers */,
 				3D80DA4B1DF820620028D040 /* RCTAlertManager.h in Headers */,
 				3D80DA4C1DF820620028D040 /* RCTAppState.h in Headers */,
-				3D0E378C1F1CC58C00DCAC9F /* RCTWebSocketObserver.h in Headers */,
 				3D80DA4D1DF820620028D040 /* RCTAsyncLocalStorage.h in Headers */,
 				3D80DA4E1DF820620028D040 /* RCTClipboard.h in Headers */,
 				3D80DA4F1DF820620028D040 /* RCTDevLoadingView.h in Headers */,
@@ -3689,6 +3734,12 @@
 			mainGroup = 83CBB9F61A601CBA00E9B192;
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = A3EC46091FCA50840023746F /* Products */;
+					ProjectRef = A3EC46081FCA50840023746F /* RCTWebSocket.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				83CBBA2D1A601D0E00E9B192 /* React */,
@@ -3709,22 +3760,38 @@
 		};
 /* End PBXProject section */
 
-/* Begin PBXShellScriptBuildPhase section */
-		006B79A01A781F38006873D1 /* Start Packager */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Start Packager";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "if [ -z \"${RCT_NO_LAUNCH_PACKAGER+xxx}\" ] ; then\n  if nc -w 5 -z localhost 8081 ; then\n    if ! curl -s \"http://localhost:8081/status\" | grep -q \"packager-status:running\" ; then\n      echo \"Port 8081 already in use, packager is either not running or not running correctly\"\n      exit 2\n    fi\n  else\n    open \"$SRCROOT/../scripts/launchPackager.command\" || echo \"Can't start packager automatically\"\n  fi\nfi";
-			showEnvVarsInLog = 0;
+/* Begin PBXReferenceProxy section */
+		A3EC46101FCA50850023746F /* libRCTWebSocket.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libRCTWebSocket.a;
+			remoteRef = A3EC460F1FCA50850023746F /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
 		};
+		A3EC46121FCA50850023746F /* libRCTWebSocket-tvOS.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = "libRCTWebSocket-tvOS.a";
+			remoteRef = A3EC46111FCA50850023746F /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		A3EC46141FCA50850023746F /* libfishhook.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libfishhook.a;
+			remoteRef = A3EC46131FCA50850023746F /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		A3EC46161FCA50850023746F /* libfishhook-tvOS.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = "libfishhook-tvOS.a";
+			remoteRef = A3EC46151FCA50850023746F /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXShellScriptBuildPhase section */
 		142C4F7F1B582EA6001F0B58 /* Include RCTJSCProfiler */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -3767,21 +3834,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "if [[ \"$CONFIGURATION\" == \"Debug\" ]] && [[ -d \"/tmp/RCTJSCProfiler\" ]]; then\nfind \"${CONFIGURATION_BUILD_DIR}\" -name '*.app' | xargs -I{} sh -c 'cp -r /tmp/RCTJSCProfiler \"$1\"' -- {}\nfi";
-			showEnvVarsInLog = 0;
-		};
-		2D6948301DA3088700B3FA97 /* Start Packager */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Start Packager";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "if [ -z \"${RCT_NO_LAUNCH_PACKAGER+xxx}\" ] ; then\nif nc -w 5 -z localhost 8081 ; then\nif ! curl -s \"http://localhost:8081/status\" | grep -q \"packager-status:running\" ; then\necho \"Port 8081 already in use, packager is either not running or not running correctly\"\nexit 2\nfi\nelse\nopen \"$SRCROOT/../scripts/launchPackager.command\" || echo \"Can't start packager automatically\"\nfi\nfi";
 			showEnvVarsInLog = 0;
 		};
 		3D383D3E1EBD27B9005632C8 /* Install Third Party */ = {
@@ -3846,7 +3898,6 @@
 				598FD1931F817284006C54CB /* PrivateDataBase.cpp in Sources */,
 				3DC159E41E83E1AE007B1282 /* RCTRootContentView.m in Sources */,
 				3D80D91B1DF6F8200028D040 /* RCTPlatform.m in Sources */,
-				CE3993601E9C236F00DC161C /* RCTSRWebSocket.m in Sources */,
 				2DD0EFE11DA84F2800B0C975 /* RCTStatusBarManager.m in Sources */,
 				2D3B5EC91D9B095C00451313 /* RCTBorderDrawing.m in Sources */,
 				C6194AAF1EF156280034D062 /* RCTPackagerConnectionBridgeConfig.m in Sources */,
@@ -3910,7 +3961,6 @@
 				2D3B5EC21D9B093B00451313 /* RCTProfile.m in Sources */,
 				2D3B5ECB1D9B096200451313 /* RCTConvert+CoreLocation.m in Sources */,
 				2D3B5EEE1D9B09DA00451313 /* RCTView.m in Sources */,
-				CE39935F1E9C236C00DC161C /* RCTReconnectingWebSocket.m in Sources */,
 				2D3B5E981D9B089500451313 /* RCTConvert.m in Sources */,
 				3D7BFD181EA8E351008DFB7A /* RCTPackagerClient.m in Sources */,
 				2D3B5EA71D9B08CE00451313 /* RCTTouchHandler.m in Sources */,
@@ -4109,7 +4159,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CE39935E1E9C236300DC161C /* RCTSRWebSocket.m in Sources */,
 				13134C9A1E296B2A00B9F3CB /* RCTCxxMethod.mm in Sources */,
 				59500D451F71C63F00B122B7 /* RCTUIManagerUtils.m in Sources */,
 				597633361F4E021D005BE8A4 /* RCTShadowView+Internal.m in Sources */,
@@ -4131,7 +4180,6 @@
 				131B6AF41AF1093D00FFC3E0 /* RCTSegmentedControl.m in Sources */,
 				830A229E1A66C68A008503DA /* RCTRootView.m in Sources */,
 				13B07FF01A69327A00A75B9A /* RCTExceptionsManager.m in Sources */,
-				CE39935D1E9C236300DC161C /* RCTReconnectingWebSocket.m in Sources */,
 				13A0C28A1B74F71200B29F6F /* RCTDevMenu.m in Sources */,
 				3D7BFD271EA8E351008DFB7A /* RCTSamplingProfilerPackagerMethod.mm in Sources */,
 				13BCE8091C99CB9D00DD7AAD /* RCTRootShadowView.m in Sources */,
