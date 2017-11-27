@@ -136,10 +136,10 @@ RCT_EXPORT_METHOD(connectAnimatedNodeToView:(nonnull NSNumber *)nodeTag
 RCT_EXPORT_METHOD(disconnectAnimatedNodeFromView:(nonnull NSNumber *)nodeTag
                   viewTag:(nonnull NSNumber *)viewTag)
 {
-  // Disconnecting a view also restores its default values so we have to make
-  // sure this happens before views get updated with their new props. This is
-  // why we enqueue this on the pre-operations queue.
   [self addPreOperationBlock:^(RCTNativeAnimatedNodesManager *nodesManager) {
+    [nodesManager restoreDefaultValues:nodeTag];
+  }];
+  [self addOperationBlock:^(RCTNativeAnimatedNodesManager *nodesManager) {
     [nodesManager disconnectAnimatedNodeFromView:nodeTag viewTag:viewTag];
   }];
 }
@@ -239,11 +239,11 @@ RCT_EXPORT_METHOD(removeAnimatedEventFromView:(nonnull NSNumber *)viewTag
 
 - (void)eventDispatcherWillDispatchEvent:(id<RCTEvent>)event
 {
-  // Native animated events only work for events dispatched from the main queue.
-  if (!RCTIsMainQueue()) {
-    return;
-  }
-  return [_nodesManager handleAnimatedEvent:event];
+  // Events can be dispatched from any queue so we have to make sure handleAnimatedEvent
+  // is run from the main queue.
+  RCTExecuteOnMainQueue(^{
+    [self->_nodesManager handleAnimatedEvent:event];
+  });
 }
 
 @end

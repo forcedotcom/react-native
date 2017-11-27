@@ -16,49 +16,12 @@
 #import <React/RCTViewManager.h>
 
 /**
- * UIManager queue
- */
-RCT_EXTERN dispatch_queue_t RCTGetUIManagerQueue(void);
-
-/**
- * Default name for the UIManager queue
- */
-RCT_EXTERN char *const RCTUIManagerQueueName;
-
-/**
- * Check if we are currently on UIManager queue.
- */
-RCT_EXTERN BOOL RCTIsUIManagerQueue(void);
-
-/**
- * Convenience macro for asserting that we're running on UIManager queue.
- */
-#define RCTAssertUIManagerQueue() RCTAssert(RCTIsUIManagerQueue(), \
-@"This function must be called on the UIManager queue")
-
-/**
  * Posted right before re-render happens. This is a chance for views to invalidate their state so
  * next render cycle will pick up updated views and layout appropriately.
  */
 RCT_EXTERN NSString *const RCTUIManagerWillUpdateViewsDueToContentSizeMultiplierChangeNotification;
 
-/**
- * Posted whenever a new root view is registered with RCTUIManager. The userInfo property
- * will contain a RCTUIManagerRootViewKey with the registered root view.
- */
-RCT_EXTERN NSString *const RCTUIManagerDidRegisterRootViewNotification;
-
-/**
- * Posted whenever a root view is removed from the RCTUIManager. The userInfo property
- * will contain a RCTUIManagerRootViewKey with the removed root view.
- */
-RCT_EXTERN NSString *const RCTUIManagerDidRemoveRootViewNotification;
-
-/**
- * Key for the root view property in the above notifications
- */
-RCT_EXTERN NSString *const RCTUIManagerRootViewKey;
-
+@class RCTLayoutAnimationGroup;
 @class RCTUIManagerObserverCoordinator;
 
 /**
@@ -82,6 +45,11 @@ RCT_EXTERN NSString *const RCTUIManagerRootViewKey;
 - (UIView *)viewForReactTag:(NSNumber *)reactTag;
 
 /**
+ * Gets the shadow view associated with a reactTag.
+ */
+- (RCTShadowView *)shadowViewForReactTag:(NSNumber *)reactTag;
+
+/**
  * Set the available size (`availableSize` property) for a root view.
  * This might be used in response to changes in external layout constraints.
  * This value will be directly trasmitted to layout engine and defines how big viewport is;
@@ -89,6 +57,17 @@ RCT_EXTERN NSString *const RCTUIManagerRootViewKey;
  * Can be considered as something similar to `setSize:forView:` but applicable only for root view.
  */
 - (void)setAvailableSize:(CGSize)availableSize forRootView:(UIView *)rootView;
+
+/**
+ * Sets local data for a shadow view corresponded with given view.
+ * In some cases we need a way to specify some environmental data to shadow view
+ * to improve layout (or do something similar), so `localData` serves these needs.
+ * For example, any stateful embedded native views may benefit from this.
+ * Have in mind that this data is not supposed to interfere with the state of
+ * the shadow view.
+ * Please respect one-directional data flow of React.
+ */
+- (void)setLocalData:(NSObject *)localData forView:(UIView *)view;
 
 /**
  * Set the size of a view. This might be in response to a screen rotation
@@ -109,6 +88,13 @@ RCT_EXTERN NSString *const RCTUIManagerRootViewKey;
  * native code you will need to call this method.
  */
 - (void)setBackgroundColor:(UIColor *)color forView:(UIView *)view;
+
+/**
+ * Sets up layout animation which will perform on next layout pass.
+ * The animation will affect only one next layout pass.
+ * Must be called on the main queue.
+ */
+- (void)setNextLayoutAnimationGroup:(RCTLayoutAnimationGroup *)layoutAnimationGroup;
 
 /**
  * Schedule a block to be executed on the UI thread. Useful if you need to execute
@@ -141,6 +127,16 @@ RCT_EXTERN NSString *const RCTUIManagerRootViewKey;
  *
  */
 - (void)rootViewForReactTag:(NSNumber *)reactTag withCompletion:(void (^)(UIView *view))completion;
+
+/**
+ * Finds a view that is tagged with nativeID as its nativeID prop
+ * with the associated rootTag root tag view hierarchy. Returns the
+ * view if found, nil otherwise.
+ *
+ * @param nativeID the id reference to native component relative to root view.
+ * @param rootTag the react tag of root view hierarchy from which to find the view.
+ */
+- (UIView *)viewForNativeID:(NSString *)nativeID withRootTag:(NSNumber *)rootTag;
 
 /**
  * The view that is currently first responder, according to the JS context.
