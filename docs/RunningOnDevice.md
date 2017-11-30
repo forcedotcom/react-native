@@ -115,6 +115,8 @@ If you used Create React Native App to set up your project, you can preview your
 
 A Mac is required in order to build your app for iOS devices. Alternatively, you can refer to the [Quick Start instructions](docs/getting-started.html) to learn how to build your app using Create React Native App, which will allow you to run your app using the Expo client app.
 
+A Mac is required in order to build your app for iOS devices. Alternatively, you can refer to the [Quick Start instructions](docs/getting-started.html) to learn how to build your app using Create React Native App, which will allow you to run your app using the Expo client app.
+
 <block class="mac ios" />
 
 ### 1. Plug in your device via USB
