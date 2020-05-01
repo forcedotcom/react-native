@@ -126,7 +126,9 @@
     "test-android-all": "npm run test-android-build && npm run test-android-run-unit && npm run test-android-run-instrumentation && npm run test-android-run-e2e",
     "test-android-instrumentation": "npm run test-android-build && npm run test-android-run-instrumentation",
     "test-android-unit": "npm run test-android-build && npm run test-android-run-unit",
-    "test-android-e2e": "npm run test-android-build && npm run test-android-run-e2e"
+    "test-android-e2e": "npm run test-android-build && npm run test-android-run-e2e",
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
   },
   "bin": {
     "react-native": "local-cli/wrong-react-native.js"
@@ -216,7 +218,8 @@
     "xmldoc": "^0.4.0",
     "xpipe": "^1.0.5",
     "xtend": ">=4.0.0 <4.1.0-0",
-    "yargs": "^6.4.0"
+    "yargs": "^6.4.0",
+    "snyk": "^1.316.1"
   },
   "devDependencies": {
     "babel-eslint": "^7.2.3",
@@ -235,5 +238,6 @@
     "react-test-renderer": "16.0.0-alpha.12",
     "shelljs": "0.6.0",
     "sinon": "^2.2.0"
-  }
+  },
+  "snyk": true
 }
