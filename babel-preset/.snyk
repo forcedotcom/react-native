@@ -1,0 +1,186 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.14.1
+ignore: {}
+# patches apply the minimum changes required to fix a vulnerability
+patch:
+  SNYK-JS-LODASH-567746:
+    - babel-plugin-react-transform > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-block-scoping > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-block-scoping > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-function-name > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-modules-commonjs > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-parameters > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-shorthand-properties > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-block-scoping > babel-traverse > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-traverse > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-parameters > babel-traverse > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-class-properties > babel-template > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-block-scoping > babel-template > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-template > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-computed-properties > babel-template > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-modules-commonjs > babel-template > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-parameters > babel-template > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-define-map > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - react-transform-hmr > react-proxy > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-parameters > babel-helper-get-function-arity > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-block-scoping > babel-traverse > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-traverse > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-parameters > babel-traverse > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-class-properties > babel-template > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-block-scoping > babel-template > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-template > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-computed-properties > babel-template > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-modules-commonjs > babel-template > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-parameters > babel-template > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-class-properties > babel-helper-function-name > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-function-name > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-function-name > babel-helper-function-name > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-define-map > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-optimise-call-expression > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-replace-supers > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-modules-commonjs > babel-plugin-transform-strict-mode > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-parameters > babel-helper-call-delegate > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-react-jsx > babel-helper-builder-react-jsx > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-regenerator > regenerator-transform > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-class-properties > babel-template > babel-traverse > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-block-scoping > babel-template > babel-traverse > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-template > babel-traverse > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-computed-properties > babel-template > babel-traverse > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-modules-commonjs > babel-template > babel-traverse > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-parameters > babel-template > babel-traverse > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-class-properties > babel-helper-function-name > babel-traverse > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-function-name > babel-traverse > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-function-name > babel-helper-function-name > babel-traverse > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-replace-supers > babel-traverse > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-parameters > babel-helper-call-delegate > babel-traverse > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-class-properties > babel-helper-function-name > babel-template > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-function-name > babel-template > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-function-name > babel-helper-function-name > babel-template > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-replace-supers > babel-template > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-class-properties > babel-helper-function-name > babel-helper-get-function-arity > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-function-name > babel-helper-get-function-arity > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-function-name > babel-helper-function-name > babel-helper-get-function-arity > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-class-properties > babel-template > babel-traverse > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-block-scoping > babel-template > babel-traverse > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-template > babel-traverse > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-computed-properties > babel-template > babel-traverse > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-modules-commonjs > babel-template > babel-traverse > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-parameters > babel-template > babel-traverse > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-class-properties > babel-helper-function-name > babel-traverse > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-function-name > babel-traverse > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-function-name > babel-helper-function-name > babel-traverse > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-replace-supers > babel-traverse > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-parameters > babel-helper-call-delegate > babel-traverse > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-class-properties > babel-helper-function-name > babel-template > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-function-name > babel-template > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-function-name > babel-helper-function-name > babel-template > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-replace-supers > babel-template > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-define-map > babel-helper-function-name > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-replace-supers > babel-helper-optimise-call-expression > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-parameters > babel-helper-call-delegate > babel-helper-hoist-variables > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-class-properties > babel-helper-function-name > babel-template > babel-traverse > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-function-name > babel-template > babel-traverse > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-function-name > babel-helper-function-name > babel-template > babel-traverse > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-replace-supers > babel-template > babel-traverse > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-define-map > babel-helper-function-name > babel-traverse > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-define-map > babel-helper-function-name > babel-template > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-define-map > babel-helper-function-name > babel-helper-get-function-arity > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-class-properties > babel-helper-function-name > babel-template > babel-traverse > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-function-name > babel-template > babel-traverse > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-function-name > babel-helper-function-name > babel-template > babel-traverse > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-replace-supers > babel-template > babel-traverse > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-define-map > babel-helper-function-name > babel-traverse > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-define-map > babel-helper-function-name > babel-template > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-define-map > babel-helper-function-name > babel-template > babel-traverse > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
+    - babel-plugin-transform-es2015-classes > babel-helper-define-map > babel-helper-function-name > babel-template > babel-traverse > babel-types > lodash:
+        patched: '2020-05-01T00:13:53.181Z'
